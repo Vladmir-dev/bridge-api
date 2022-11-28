@@ -124,7 +124,7 @@ class AuthViewSet(GenericViewSet):
 				
 				if user.check_password(password):
 					data = {
-						"data":"Login succesfull"
+						"token":user.token
 					}
 					return Response(data, status=status.HTTP_200_OK)
 				else:
@@ -149,7 +149,7 @@ class AuthViewSet(GenericViewSet):
 
 					if user.check_password(password):
 						data = {
-							"data":"Login successfull"
+							"token":user.token
 						}
 						return Response(data, status=status.HTTP_200_OK)
 					else:
@@ -160,7 +160,7 @@ class AuthViewSet(GenericViewSet):
 				
 				if user.check_password(password):
 					data = {
-						"data":"Login successfull"
+						"token":user.token
 					}
 					return Response(data, status=status.HTTP_200_OK)
 				
