@@ -9,7 +9,8 @@ class BaseRegister(CountryFieldMixin, serializers.ModelSerializer):
 	class Meta:
 		model = User
 		fields = ['username', 'first_name', 'last_name', 'phone_number', 'email', 'sex', 'accepted_terms', 'date_of_birth', 'country', 'nationality', 'city', 'password']
-
+		extra_kwargs = {'password': {'write_only': True,}}
+		
 		def validate_accepted_terms(self,value):
 			if not value:
 				raise ValidationError(("You must accept our terms of service and privacy policy"))
@@ -19,3 +20,7 @@ class BaseRegister(CountryFieldMixin, serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
 	username = serializers.CharField(required=True)
 	password = serializers.CharField(required=True)
+
+
+class UserSerializer(serializers.Serializer):
+	token = serializers.CharField(required=True)

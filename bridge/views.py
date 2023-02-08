@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serialisers import BaseRegister,LoginSerializer
+from .serialisers import BaseRegister,LoginSerializer,UserSerializer
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import exceptions as exc 
 from rest_framework.decorators import action
@@ -26,11 +26,11 @@ class AuthViewSet(GenericViewSet):
 
 		return Serializer
 
-	def create(self, *args, **kwargs):
-		raise exc.NotSupported()
+	# def create(self, *args, **kwargs):
+	# 	raise exc.NotSupported()
 	
-	def list(self, *args, **kwargs):
-		raise exc.NotSupported()
+	# def list(self, *args, **kwargs):
+	# 	raise exc.NotSupported()
 
 
 	@action(detail=False, methods=['POST'])
@@ -102,6 +102,7 @@ class AuthViewSet(GenericViewSet):
 
 		return Response(data,status=status.HTTP_201_CREATED)
 
+
 	@action(detail=False, methods=['POST'])
 	def login(self, request, **kwargs):
 		serializer = LoginSerializer(data=request.data)
@@ -171,3 +172,31 @@ class AuthViewSet(GenericViewSet):
 					return Response(data, status=status.HTTP_401_UNAUTHORIZED)
 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+	@action(detail=False, methods=['POST'], url_path="user/(?P<id>[0-9A-Za-z_\-]+)")
+	def get_user(self, request, id):
+		
+		#serializer
+		Serializer = UserSerializer(data=request.data)
+		Serializer.is_valid(raise_exception=True)
+		#get user
+
+		try:
+			user = User.objects.filter(id=id)
+		except:
+			raise ValidationError("User does not exist")
+
+		user = User.objects.get(id=id)
+
+		#check wether token matches
+
+		
+		if user.token == Serializer.data['token']:
+			user_serializer = BaseRegister(user)
+			return Response(user_serializer.data, status=status.HTTP_200_OK)
+
+		else:
+			data = {
+				"data":"failed credentials"
+			}
+			return Response(data, status=status.HTTP_401_UNAUTHORIZED)
