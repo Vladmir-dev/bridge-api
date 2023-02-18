@@ -1,13 +1,13 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer
+from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, PostSerializer
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import exceptions as exc
 from rest_framework.decorators import action
 from rest_framework import status
 import re
 from rest_framework.exceptions import ValidationError
-from .models import User, Wallet
+from .models import User, Wallet, Posts
 from .services import emailValidator, sexValidator, get_token_for_account
 from rest_framework.serializers import Serializer
 
@@ -189,8 +189,8 @@ class AuthViewSet(GenericViewSet):
     def get_user(self, request, id):
 
         # serializer
-        Serializer = TokenSerializer(data=request.data)
-        Serializer.is_valid(raise_exception=True)
+        serializer = TokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         # get user
 
         try:
@@ -202,7 +202,7 @@ class AuthViewSet(GenericViewSet):
 
         # check wether token matches
 
-        if user.token == Serializer.data['token']:
+        if user.token == serializer.data['token']:
             user_serializer = UserSerializer(user)
             return Response(user_serializer.data, status=status.HTTP_200_OK)
 
@@ -211,3 +211,30 @@ class AuthViewSet(GenericViewSet):
                 "data": "failed credentials"
             }
             return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+
+
+    @action(detail=False, methods=['POST'], url_path="make_post")
+    def make_post(self, request):
+
+        # serializer
+        serializer = PostSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # verify user
+
+        try:
+            user = User.objects.filter(token=serializer.data['token'])
+        except:
+            raise ValidationError("User does not exist")
+
+        user = User.objects.get(token=serializer.data['token'])
+
+        # print message
+        print("this is the message =======>", serializer.data['message'])
+        post = Posts(user=user, message=serializer.data['message'])
+        post.save()
+
+        return Response(status=status.HTTP_201_CREATED)
+
+    
+

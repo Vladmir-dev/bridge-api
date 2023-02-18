@@ -34,3 +34,8 @@ class LoginSerializer(serializers.Serializer):
 
 class TokenSerializer(serializers.Serializer):
     token = serializers.CharField(required=True)
+
+
+class PostSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    message = serializers.CharField(required=True)
