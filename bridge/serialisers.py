@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, Posts
 from django_countries.serializers import CountryFieldMixin
 from rest_framework.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -20,10 +20,12 @@ class BaseRegister(CountryFieldMixin, serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    # country = serializers.CharField()
+
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'phone_number', 'email', 'sex',
-                  'accepted_terms', 'date_of_birth', 'country', 'nationality', 'city', 'password']
+                  'accepted_terms', 'date_of_birth',  'nationality', 'city', 'password']
         extra_kwargs = {'password': {'write_only': True, }}
 
 
@@ -39,3 +41,9 @@ class TokenSerializer(serializers.Serializer):
 class PostSerializer(serializers.Serializer):
     token = serializers.CharField(required=True)
     message = serializers.CharField(required=True)
+
+
+class PostsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Posts
+        fields = "__all__"

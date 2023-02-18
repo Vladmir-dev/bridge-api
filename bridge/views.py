@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, PostSerializer
+from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, PostSerializer, PostsSerializer
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import exceptions as exc
 from rest_framework.decorators import action
@@ -235,6 +235,40 @@ class AuthViewSet(GenericViewSet):
         post.save()
 
         return Response(status=status.HTTP_201_CREATED)
+
+
+    @action(detail=False, methods=['POST'], url_path="get_posts/(?P<id>[0-9A-Za-z_\-]+)")
+    def get_post(self, request, id):
+        #serializer
+        serializer = TokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # get user
+
+        try:
+            user = User.objects.filter(id=id)
+        except:
+            raise ValidationError("User does not exist")
+
+        user = User.objects.get(id=id)
+
+        # check wether token matches
+
+        if user.token == serializer.data['token']:
+            user_posts = Posts.objects.get(user=user)
+            # print("==>",user_posts)
+            post_serializer = PostsSerializer(user_posts)
+            # print(post_serializer.data)
+            # user_serializer = UserSerializer(user)
+            return Response(post_serializer.data,status=status.HTTP_200_OK)
+
+        else:
+            data = {
+                "data": "failed credentials"
+            }
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+
+       
 
     
 
