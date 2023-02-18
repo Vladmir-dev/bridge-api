@@ -19,7 +19,7 @@ class BaseRegister(CountryFieldMixin, serializers.ModelSerializer):
             return value
 
 
-class UserSerializer(serializers.ModalSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'phone_number', 'email', 'sex',

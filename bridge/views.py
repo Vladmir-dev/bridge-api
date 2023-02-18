@@ -107,6 +107,7 @@ class AuthViewSet(GenericViewSet):
             'accepted_terms': user.accepted_terms,
             'date_joined': user.date_joined,
             "wallet": {
+                "wallet_no": wallet.wallet_no,
                 "amount": wallet.amount,
                 "total_received": wallet.total_received,
                 "total_sent": wallet.total_sent
