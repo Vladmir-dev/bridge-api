@@ -10,6 +10,7 @@ from rest_framework.exceptions import ValidationError
 from .models import User, Wallet, Posts
 from .services import emailValidator, sexValidator, get_token_for_account
 from rest_framework.serializers import Serializer
+from django.forms.models import model_to_dict
 
 # Create your views here.
 
@@ -203,15 +204,15 @@ class AuthViewSet(GenericViewSet):
         # check wether token matches
 
         if user.token == serializer.data['token']:
-            user_serializer = UserSerializer(user)
-            return Response(user_serializer.data, status=status.HTTP_200_OK)
+            queryset = User.objects.filter(id=id).values()
+            # user_serializer = UserSerializer(user)
+            return Response(list(queryset), status=status.HTTP_200_OK)
 
         else:
             data = {
                 "data": "failed credentials"
             }
             return Response(data, status=status.HTTP_401_UNAUTHORIZED)
-
 
     @action(detail=False, methods=['POST'], url_path="make_post")
     def make_post(self, request):
@@ -236,10 +237,9 @@ class AuthViewSet(GenericViewSet):
 
         return Response(status=status.HTTP_201_CREATED)
 
-
     @action(detail=False, methods=['POST'], url_path="get_posts/(?P<id>[0-9A-Za-z_\-]+)")
     def get_post(self, request, id):
-        #serializer
+        # serializer
         serializer = TokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -260,15 +260,10 @@ class AuthViewSet(GenericViewSet):
             post_serializer = PostsSerializer(user_posts)
             # print(post_serializer.data)
             # user_serializer = UserSerializer(user)
-            return Response(post_serializer.data,status=status.HTTP_200_OK)
+            return Response(post_serializer.data, status=status.HTTP_200_OK)
 
         else:
             data = {
                 "data": "failed credentials"
             }
             return Response(data, status=status.HTTP_401_UNAUTHORIZED)
-
-       
-
-    
-

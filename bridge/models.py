@@ -63,6 +63,7 @@ class ChatMessage(models.Model):
         return self.message
 
 
+#add image field
 class Posts(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField()
