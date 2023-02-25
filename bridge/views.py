@@ -12,6 +12,7 @@ from .services import emailValidator, sexValidator, get_token_for_account
 from rest_framework.serializers import Serializer
 from django.forms.models import model_to_dict
 from rest_framework.permissions import IsAuthenticated
+import json
 
 # Create your views here.
 
@@ -43,11 +44,11 @@ class AuthViewSet(GenericViewSet):
             return Response(serializer.errors, status=status.HHTP_400_BAD_REQUEST)
 
         # check phone number
-        # phone_number = serializer.data['phone_number']
-        # print("number ===>", phone_number)
-        # regex = re.compile(r'\d{12}')
-        # if not (re.search(regex, phone_number)):
-        #     raise ValidationError("Phone Number must be up to 12 digits")
+        phone_number = serializer.data['phone_number']
+        print("number ===>", phone_number)
+        regex = re.compile(r'\d{12}')
+        if not (re.search(regex, phone_number)):
+            raise ValidationError("Phone Number must be up to 12 digits")
 
         # check password
         password = serializer.data['password']
@@ -83,11 +84,11 @@ class AuthViewSet(GenericViewSet):
                 "You must accept our terms of service and privacy policy")
 
         # create user
-        user = User(first_name=serializer.data['first_name'],
+        user = User(first_name=serializer.data['first_name'], phone_number=phone_number, country=serializer.data['country'], nationality=serializer.data['nationality'],
                     last_name=serializer.data['last_name'], email=email, accepted_terms=accepted_terms)
         user.set_password(password)
         user.save()
-
+        print("user created")
         # get a token for account
         user.token = get_token_for_account(user, "authentication")
         user.save()
@@ -95,6 +96,9 @@ class AuthViewSet(GenericViewSet):
         # create wallet
         wallet = Wallet(user=user)
         wallet.save()
+
+        # country = json.dumps(user.country)
+        # print("country ========>", model_to_dict(user.country))
 
         data = {
             "id": user.id,
@@ -105,6 +109,8 @@ class AuthViewSet(GenericViewSet):
             "phone_number": user.phone_number,
             "sex": user.sex,
             "city": user.city,
+            # "country":country,
+            # "nationality": user.nationality,
             "date_of_birth": user.date_of_birth,
             'accepted_terms': user.accepted_terms,
             'date_joined': user.date_joined,
@@ -132,13 +138,6 @@ class AuthViewSet(GenericViewSet):
 
         user = User.objects.get(id=id)
 
-        # check phone number
-        phone_number = serializer.data['phone_number']
-        print("number ===>", phone_number)
-        regex = re.compile(r'\d{12}')
-        if not (re.search(regex, phone_number)):
-            raise ValidationError("Phone Number must be up to 12 digits")
-
         # check if username already exists
         username = serializer.data['username']
         print("username ==>", username)
@@ -151,7 +150,7 @@ class AuthViewSet(GenericViewSet):
         city = serializer.data['city']
         date_of_birth = serializer.data['date_of_birth']
 
-        user.phone_number = phone_number
+        # user.phone_number = phone_number
         user.username = username
         user.sex = sex
         user.city = city
@@ -159,6 +158,9 @@ class AuthViewSet(GenericViewSet):
         user.save()
 
         wallet = Wallet.objects.get(user=user)
+
+        query_set = UserSerializer(user)
+        print(query_set)
 
         data = {
             "id": user.id,
@@ -169,6 +171,8 @@ class AuthViewSet(GenericViewSet):
             "phone_number": user.phone_number,
             "sex": user.sex,
             "city": user.city,
+            # "country": user.country,
+            # "nationality": user.nationality,
             "date_of_birth": user.date_of_birth,
             'accepted_terms': user.accepted_terms,
             'date_joined': user.date_joined,

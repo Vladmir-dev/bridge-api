@@ -27,7 +27,7 @@ class User(AbstractBaseUser):
     #         return os.path.join('user', instance)
     uuid = models.CharField(max_length=100, editable=False,
                             null=False, blank=False, unique=True, default=uuid.uuid4)
-    username = models.CharField(max_length=150, unique=True)
+    username = models.CharField(max_length=150, unique=True, null=True, blank=True)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     email = models.EmailField(
