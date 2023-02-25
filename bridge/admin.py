@@ -8,7 +8,7 @@ from .models import User
 class UserAdmin(admin.ModelAdmin):
     model = User
     # Only display the "username" field
-    fields = ['username', 'first_name', 'last_name', 'phone_number', 'email', 'sex', 'accepted_terms', 'date_of_birth', 'country', 'nationality', 'city', 'password']
+    fields = ['username', 'first_name', 'last_name', 'phone_number', 'email', 'sex', 'accepted_terms', 'date_of_birth', 'country', 'nationality', 'city', 'password', 'photo', 'background_photo']
     # inlines = [ProfileInline]
     
 # Register your models here.

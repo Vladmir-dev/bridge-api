@@ -7,6 +7,9 @@ from django.utils import timezone
 import re
 from django.utils.translation import gettext_lazy as _
 import rstr
+import os
+from PIL import Image
+from bridge.base.files import get_file_path
 # from django.db.models.signals import post_save
 # Create your models here.
 
@@ -15,7 +18,13 @@ def get_wallet_account_number():
     return rstr.xeger(r'[A-Z]\d\d[A-Z][A-Z]\d')
 
 
+def get_user_photo_file_path(instance, filename):
+    return get_file_path(instance, filename, "user/photo")
+
 class User(AbstractBaseUser):
+    # def image_upload_to(self, instance=None):
+    #     if instance:
+    #         return os.path.join('user', instance)
     uuid = models.CharField(max_length=100, editable=False,
                             null=False, blank=False, unique=True, default=uuid.uuid4)
     username = models.CharField(max_length=150, unique=True)
@@ -37,9 +46,9 @@ class User(AbstractBaseUser):
     is_active = models.BooleanField(default=False)
     city = models.CharField(max_length=200, blank=True)
     token = models.CharField(max_length=1000, null=True)
-    photo = models.ImageField(upload_to="media", null=True, blank=True)
+    photo = models.ImageField(upload_to=get_user_photo_file_path, null=True, blank=True)
     background_photo = models.ImageField(
-        upload_to="media", null=True, blank=True)
+        upload_to=get_user_photo_file_path, null=True, blank=True)
     anonymous = models.BooleanField(default=False)
 
     USERNAME_FIELD = "username"
@@ -49,6 +58,23 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return self.username
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        SIZE = (300, 300)
+        
+        if self.photo: 
+            img = Image.open(self.photo.path)
+            img.thumbnail(SIZE)
+            img.save(self.photo.path)
+        
+        # for field_name in ['photo', 'background_photo']:
+        #     field = getattr(User, field_name)
+        #     if field:
+        #         img = Image.open(field)
+        #         img.thumbnail(SIZE)
+        #         img.save(self.field_name.path)
 
 
 class ChatMessage(models.Model):

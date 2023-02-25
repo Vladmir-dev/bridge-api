@@ -42,11 +42,11 @@ class AuthViewSet(GenericViewSet):
             return Response(serializer.errors, status=status.HHTP_400_BAD_REQUEST)
 
         # check phone number
-        phone_number = serializer.data['phone_number']
-        print("number ===>", phone_number)
-        regex = re.compile(r'\d{12}')
-        if not (re.search(regex, phone_number)):
-            raise ValidationError("Phone Number must be up to 12 digits")
+        # phone_number = serializer.data['phone_number']
+        # print("number ===>", phone_number)
+        # regex = re.compile(r'\d{12}')
+        # if not (re.search(regex, phone_number)):
+        #     raise ValidationError("Phone Number must be up to 12 digits")
 
         # check password
         password = serializer.data['password']
@@ -55,12 +55,12 @@ class AuthViewSet(GenericViewSet):
             raise ValidationError("Password must be atleast 8 characters")
 
         # check if username already exists
-        username = serializer.data['username']
-        print("username ==>", username)
-        if username != None:
-            CheckUsername = User.objects.filter(username=username)
-            if CheckUsername:
-                raise ValidationError("Username already exists")
+        # username = serializer.data['username']
+        # print("username ==>", username)
+        # if username != None:
+        #     CheckUsername = User.objects.filter(username=username)
+        #     if CheckUsername:
+        #         raise ValidationError("Username already exists")
 
         # check email
         email = serializer.data['email']
@@ -68,11 +68,11 @@ class AuthViewSet(GenericViewSet):
         emailValidator(email)
 
         # check country
-        country = serializer.data['country']
-        print("country ==>", country)
-        if len(country) != 2:
-            raise ValidationError(
-                "Country should be made up of 2 characters which are the initials of the country")
+        # country = serializer.data['country']
+        # print("country ==>", country)
+        # if len(country) != 2:
+        #     raise ValidationError(
+        #         "Country should be made up of 2 characters which are the initials of the country")
 
         # check accepted terms
         accepted_terms = serializer.data['accepted_terms']
@@ -82,8 +82,8 @@ class AuthViewSet(GenericViewSet):
                 "You must accept our terms of service and privacy policy")
 
         # create user
-        user = User(username=username, first_name=serializer.data['first_name'], last_name=serializer.data['last_name'], phone_number=phone_number, email=email,
-                    sex=serializer.data['sex'], city=serializer.data['city'], date_of_birth=serializer.data['date_of_birth'], accepted_terms=accepted_terms)
+        user = User(first_name=serializer.data['first_name'],
+                    last_name=serializer.data['last_name'], email=email, accepted_terms=accepted_terms)
         user.set_password(password)
         user.save()
 

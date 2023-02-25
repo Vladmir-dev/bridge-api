@@ -8,8 +8,8 @@ from django.utils.translation import gettext_lazy as _
 class BaseRegister(CountryFieldMixin, serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'phone_number', 'email', 'sex',
-                  'accepted_terms', 'date_of_birth', 'country', 'nationality', 'city', 'password']
+        fields = ['first_name', 'last_name',
+                  'email', 'accepted_terms', 'password']
         # extra_kwargs = {'password': {'write_only': True,}}
 
         def validate_accepted_terms(self, value):
