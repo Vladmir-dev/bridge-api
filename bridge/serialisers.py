@@ -19,6 +19,14 @@ class BaseRegister(CountryFieldMixin, serializers.ModelSerializer):
             return value
 
 
+class ProfileRegister(CountryFieldMixin, serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'phone_number', 'sex',
+                  'date_of_birth',  'nationality', 'city']
+        # extra_kwargs = {'password': {'write_only': True,}}
+
+
 class UserSerializer(serializers.ModelSerializer):
     # country = serializers.CharField()
 

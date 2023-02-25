@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, PostSerializer, PostsSerializer
+from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, PostSerializer, PostsSerializer, ProfileRegister
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import exceptions as exc
 from rest_framework.decorators import action
@@ -11,6 +11,7 @@ from .models import User, Wallet, Posts
 from .services import emailValidator, sexValidator, get_token_for_account
 from rest_framework.serializers import Serializer
 from django.forms.models import model_to_dict
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 
@@ -94,6 +95,70 @@ class AuthViewSet(GenericViewSet):
         # create wallet
         wallet = Wallet(user=user)
         wallet.save()
+
+        data = {
+            "id": user.id,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "phone_number": user.phone_number,
+            "sex": user.sex,
+            "city": user.city,
+            "date_of_birth": user.date_of_birth,
+            'accepted_terms': user.accepted_terms,
+            'date_joined': user.date_joined,
+            "wallet": {
+                "wallet_no": wallet.wallet_no,
+                "amount": wallet.amount,
+                "total_received": wallet.total_received,
+                "total_sent": wallet.total_sent
+            }
+        }
+
+        return Response(data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['POST'], url_path="user_id/(?P<id>[0-9A-Za-z_\-]+)")
+    def create_profile(self, request, id, *args, **kwargs):
+        permission_classes = [IsAuthenticated,]
+        serializer = ProfileRegister(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # check user
+        try:
+            user = User.objects.filter(id=id)
+        except:
+            raise ValidationError("User does not exist")
+
+        user = User.objects.get(id=id)
+
+        # check phone number
+        phone_number = serializer.data['phone_number']
+        print("number ===>", phone_number)
+        regex = re.compile(r'\d{12}')
+        if not (re.search(regex, phone_number)):
+            raise ValidationError("Phone Number must be up to 12 digits")
+
+        # check if username already exists
+        username = serializer.data['username']
+        print("username ==>", username)
+        if username != None:
+            CheckUsername = User.objects.filter(username=username)
+            if CheckUsername:
+                raise ValidationError("Username already exists")
+
+        sex = serializer.data['sex']
+        city = serializer.data['city']
+        date_of_birth = serializer.data['date_of_birth']
+
+        user.phone_number = phone_number
+        user.username = username
+        user.sex = sex
+        user.city = city
+        user.date_of_birth = date_of_birth
+        user.save()
+
+        wallet = Wallet.objects.get(user=user)
 
         data = {
             "id": user.id,
