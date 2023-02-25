@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 class BaseRegister(CountryFieldMixin, serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name',
+        fields = ['first_name', 'last_name', 'phone_number',
                   'email', 'accepted_terms', 'password']
         # extra_kwargs = {'password': {'write_only': True,}}
 
@@ -22,8 +22,8 @@ class BaseRegister(CountryFieldMixin, serializers.ModelSerializer):
 class ProfileRegister(CountryFieldMixin, serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'phone_number', 'sex',
-                  'date_of_birth',  'nationality', 'city']
+        fields = ['username',  'sex', 'date_of_birth',
+                  'country', 'nationality', 'city']
         # extra_kwargs = {'password': {'write_only': True,}}
 
 
