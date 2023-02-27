@@ -84,7 +84,7 @@ class AuthViewSet(GenericViewSet):
                 "You must accept our terms of service and privacy policy")
 
         # create user
-        user = User(first_name=serializer.data['first_name'], phone_number=phone_number, country=serializer.data['country'], nationality=serializer.data['nationality'],
+        user = User(first_name=serializer.data['first_name'], phone_number=phone_number, 
                     last_name=serializer.data['last_name'], email=email, accepted_terms=accepted_terms)
         user.set_password(password)
         user.save()
