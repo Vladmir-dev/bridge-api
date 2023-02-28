@@ -1,4 +1,6 @@
 from random import randint
+from django.conf import settings
+from django.core.mail import send_mail
 
 def createCode():
     count = 0
@@ -16,9 +18,13 @@ def timedifference(creationDate, currentDate):
         duration = currentDate-creationDate
         return abs(duration.total_seconds())
 
-def sendSMS():
+def sendSMS(phone_number, code):
     pass
 
-def sendEmail():
-    pass
+def sendEmail(email, code):
+    msg = f'Your verification code is {code}'
+    send_mail( subject='BRIDGE VERIFICATION', message= msg,from_email=settings.EMAIL_HOST_USER, recipient_list=[email])
+    print("message sent")
+    return msg
+    
 

@@ -13,7 +13,7 @@ from rest_framework.serializers import Serializer
 from django.forms.models import model_to_dict
 from rest_framework.permissions import IsAuthenticated
 import json
-from bridge.base.methods import createCode, timedifference
+from bridge.base.methods import createCode, timedifference, sendEmail
 from django.utils import timezone
 
 # Create your views here.
@@ -102,20 +102,33 @@ class AuthViewSet(GenericViewSet):
         code = createCode()
         print("code ===>", code)
 
-        phone_number = '+' + phone_number
-        message = "Your Verification code is" + code
+        check_email = VerificationDetails.objects.filter(
+            email=email)
 
-        check_phone_number = VerificationDetails.objects.filter(
-            phone_number=phone_number)
-
-        if check_phone_number:
-            check_phone_number.update(
+        if check_email:
+            check_email.update(
                 auth_otp=code, date_created=timezone.now())
-            # send sms
+            sendEmail(email, code)
 
         else:
             verification = VerificationDetails(
-                phone_number=user.phone_number, auth_otp=code)
+                email=user.email, auth_otp=code)
+            sendEmail(email, code)
+
+        # phone_number = '+' + phone_number
+        # message = "Your Verification code is" + code
+
+        # check_phone_number = VerificationDetails.objects.filter(
+            # phone_number=phone_number)
+
+        # if check_phone_number:
+            # check_phone_number.update(
+                # auth_otp=code, date_created=timezone.now())
+            # send sms
+
+        # else:
+            # verification = VerificationDetails(
+                # phone_number=user.phone_number, auth_otp=code)
             # send sms
 
         data = {
@@ -284,25 +297,29 @@ class AuthViewSet(GenericViewSet):
     
 
 
-    @action(detail=False, methods=['POST'], url_path="user")
+    @action(detail=False, methods=['GET'], url_path="user",)
     def get_user(self, request):
-        # permission_classes = [IsAuthenticated,]
+        
         # serializer
-        serializer = TokenSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        # serializer = TokenSerializer(data=request.data)
+        # serializer.is_valid(raise_exception=True)
         # get user
+        user_token = request.META.get('HTTP_AUTHORIZATION', '')
+        user_token = user_token.replace('Bearer ', '')
+        # user_token = str(user_token)
+        print("this is the token", user_token)
 
         try:
-            user = User.objects.filter(token=serializer.data['token'])
+            user = User.objects.filter(token=user_token)
         except:
             raise ValidationError("User does not exist")
 
-        user = User.objects.get(token=serializer.data['token'])
+        user = User.objects.get(token=user_token)
 
         # check wether token matches
 
         # if user.token == serializer.data['token']:
-        queryset = User.objects.filter(token=serializer.data['token']).values()
+        queryset = User.objects.filter(token=user_token).values()
             # user_serializer = UserSerializer(user)
         return Response(list(queryset), status=status.HTTP_200_OK)
 

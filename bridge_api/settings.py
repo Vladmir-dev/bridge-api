@@ -145,3 +145,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True
 
 CSRF_TRUSTED_ORIGINS = ['https://*.127.0.0.1', 'https://bridgeapi.up.railway.app','http://*.127.0.0.1',]
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'tempestpius70@gmail.com'
+EMAIL_HOST_PASSWORD = 'tfzielauaowcfyvo'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
