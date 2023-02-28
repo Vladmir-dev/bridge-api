@@ -21,13 +21,15 @@ def get_wallet_account_number():
 def get_user_photo_file_path(instance, filename):
     return get_file_path(instance, filename, "user/photo")
 
+
 class User(AbstractBaseUser):
     # def image_upload_to(self, instance=None):
     #     if instance:
     #         return os.path.join('user', instance)
     uuid = models.CharField(max_length=100, editable=False,
                             null=False, blank=False, unique=True, default=uuid.uuid4)
-    username = models.CharField(max_length=150, unique=True, null=True, blank=True)
+    username = models.CharField(
+        max_length=150, unique=True, null=True, blank=True)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     email = models.EmailField(
@@ -46,10 +48,12 @@ class User(AbstractBaseUser):
     is_active = models.BooleanField(default=False)
     city = models.CharField(max_length=200, blank=True)
     token = models.CharField(max_length=1000, null=True)
-    photo = models.ImageField(upload_to=get_user_photo_file_path, null=True, blank=True)
+    photo = models.ImageField(
+        upload_to=get_user_photo_file_path, null=True, blank=True)
     background_photo = models.ImageField(
         upload_to=get_user_photo_file_path, null=True, blank=True)
     anonymous = models.BooleanField(default=False)
+    verified = models.BooleanField(default=False)
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["email"]
@@ -63,12 +67,12 @@ class User(AbstractBaseUser):
         super().save(*args, **kwargs)
 
         SIZE = (300, 300)
-        
-        if self.photo: 
+
+        if self.photo:
             img = Image.open(self.photo.path)
             img.thumbnail(SIZE)
             img.save(self.photo.path)
-        
+
         # for field_name in ['photo', 'background_photo']:
         #     field = getattr(User, field_name)
         #     if field:
@@ -89,7 +93,7 @@ class ChatMessage(models.Model):
         return self.message
 
 
-#add image field
+# add image field
 class Posts(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField()
@@ -134,6 +138,13 @@ class Likes(models.Model):
 
     def __str__(self):
         return self.post
+
+
+class VerificationDetails(models.Model):
+    email = models.EmailField()
+    phone_number = models.CharField(max_length=50)
+    auth_otp = models.CharField(max_length=50)
+    date_created = models.DateTimeField(auto_now_add=True)
 
 
 # class Profile(models.Model):
