@@ -297,6 +297,7 @@ class AuthViewSet(GenericViewSet):
     
 
 
+
     @action(detail=False, methods=['GET'], url_path="user",)
     def get_user(self, request):
         
@@ -383,7 +384,120 @@ class AuthViewSet(GenericViewSet):
                 "data": "failed credentials"
             }
             return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+
+
+    @action(detail=False,methods=["POST"], url_path="send_otp")
+    def sendOTP(self, request, **kwargs):
+        #field to authenticate
+        fieldToAuthenticate = request.data.get("verificationField")
+        if fieldToAuthenticate is None or fieldToAuthenticate =="":
+            data ={
+                'error': 'check verificationField for errors'
+                }
+            return Response(data, status = status.HTTP_403_FORBIDDEN)
         
+        #check field in list
+        verifyList = ['email', 'phone_number']
+        if not fieldToAuthenticate in verifyList:
+            data = {
+                'status': 'failed', 
+                'detail': 'wrong verificationField'
+            }
+            return Response(data, status = status.HTTP_403_FORBIDDEN)
+        
+        #fieldsValidator(fieldToAuthenticate, 'verificationDetails')
+        # if fieldToAuthenticate == 'phone_number':
+        #     phoneNumber = request.data.get("phone_number")
+        #     if phoneNumber is None or phoneNumber =="":
+        #         data ={
+        #             'error': 'check phone Number field for errors'
+        #             }
+        #         return Response(data, status = status.HTTP_403_FORBIDDEN)
+            
+        #     checkPhoneNumberInDb = User.objects.filter(phone_number= phoneNumber)
+        #     if not checkPhoneNumberInDb:
+        #         data = {
+        #             'status': 'failed',
+        #             'detail': 'there is no account with that phone number'
+        #         }
+        #         return Response(data, status = status.HTTP_401_UNAUTHORIZED)
+            
+        #     #generate random code
+        #     authOTP= createCode()
+        #     print(authOTP)
+        #     #if instance is already there just update otp
+        #     checkPhoneNumber = VerificationDetails.objects.filter(phone_number= phoneNumber)
+        #     if checkPhoneNumber:
+        #         currentTime = timezone.now()
+        #         checkPhoneNumber.update(otp = authOTP, dateCreated= currentTime)
+        #         phoneNumber = '+'+ phoneNumber
+        #         message = 'Your verification code is '+ authOTP
+        #         # sendSMS(phoneNumber,message)
+        #         data = {
+        #             'status': 'success',
+        #             'detail': 'OTP sent'
+        #         }
+        #         return Response(data, status = status.HTTP_200_OK)
+            
+        #     #register otp in database
+        #     registerOTP = VerificationDetails(phone_number = phoneNumber, otp = authOTP)
+        #     registerOTP.save()
+        #     #send sms
+        #     phoneNumber = '+'+ phoneNumber
+        #     message = 'Your verification code is '+ authOTP
+        #     sendSMS(phoneNumber, message)
+
+    
+        #     data = {
+        #         'status': 'success',
+        #         'detail': 'OTP sent'
+        #         }
+        #     return JsonResponse(data, status = status.HTTP_200_OK)
+        
+
+        email = request.data.get("email")
+        if email is None or email =="":
+            data ={
+                'error': 'check email field for errors'
+                }
+            return Response(data, status = status.HTTP_403_FORBIDDEN)
+        # checkEmailInDb = Account.objects.filter(email = email)
+        # if not checkEmailInDb:
+        #     data = {
+        #         'status': 'failed',
+        #         'detail': 'there is no account with that email'
+        #         }
+        #     return JsonResponse(data, status = status.HTTP_401_UNAUTHORIZED)
+
+        #generate random code
+        authOTP= createCode()
+        #if instance is already there just update otp
+        checkEmail = VerificationDetails.objects.filter(email= email)
+        if checkEmail:
+            currentTime = timezone.now()
+            checkEmail.update(auth_otp = authOTP, date_created= currentTime)
+            email = email
+            message = 'Your verification code is '+ authOTP
+            sendEmail(email, authOTP)
+
+            data = {
+                'status': 'success',
+                'detail': 'OTP sent'
+                }
+            return Response(data, status = status.HTTP_200_OK)
+        
+        #register otp in database
+        registerOTP = VerificationDetails(email = email, auth_otp = authOTP)
+        registerOTP.save()
+        #send email
+        email = email
+        message = 'Your verification code is '+ authOTP
+        sendEmail(email,authOTP)
+        data = {
+            'status': 'success',
+            'detail': 'OTP sent'
+            }
+        return Response(data, status = status.HTTP_200_OK)    
 
 
     @action(detail=False, methods=["POST"])
