@@ -97,6 +97,7 @@ class ChatMessage(models.Model):
 class Posts(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField()
+    photo = models.ImageField(upload_to=get_user_photo_file_path, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -127,6 +128,7 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Posts, on_delete=models.CASCADE)
     comment = models.TextField()
+    photo = models.ImageField(upload_to=get_user_photo_file_path, null=True, blank=True)
 
     def __str__(self):
         return self.comment
