@@ -116,7 +116,7 @@ class AuthViewSet(GenericViewSet):
         else:
             verification = VerificationDetails(
                 phone_number=user.phone_number, auth_otp=code)
-            # sed sms
+            # send sms
 
         data = {
             "id": user.id,
@@ -284,25 +284,25 @@ class AuthViewSet(GenericViewSet):
     
 
 
-    @action(detail=False, methods=['GET'], url_path="user/(?P<id>[0-9A-Za-z_\-]+)")
-    def get_user(self, request, id):
-        permission_classes = [IsAuthenticated,]
+    @action(detail=False, methods=['POST'], url_path="user")
+    def get_user(self, request):
+        # permission_classes = [IsAuthenticated,]
         # serializer
-        # serializer = TokenSerializer(data=request.data)
-        # serializer.is_valid(raise_exception=True)
+        serializer = TokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         # get user
 
         try:
-            user = User.objects.filter(id=id)
+            user = User.objects.filter(token=serializer.data['token'])
         except:
             raise ValidationError("User does not exist")
 
-        user = User.objects.get(id=id)
+        user = User.objects.get(token=serializer.data['token'])
 
         # check wether token matches
 
         # if user.token == serializer.data['token']:
-        queryset = User.objects.filter(id=id).values()
+        queryset = User.objects.filter(token=serializer.data['token']).values()
             # user_serializer = UserSerializer(user)
         return Response(list(queryset), status=status.HTTP_200_OK)
 
@@ -492,7 +492,7 @@ class AuthViewSet(GenericViewSet):
         timeInSec = timedifference(getDate, currentTime)
         if timeInSec <= expirationTime:
             # update is_phone_verified
-            update_is_email_verified = User.objects.filter(
+            update_verified = User.objects.filter(
                 email=email).update(verified=True)
             data = {
                 'status': 'success',
