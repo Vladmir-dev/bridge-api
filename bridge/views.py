@@ -554,7 +554,7 @@ class AuthViewSet(GenericViewSet):
                 return Response(data, status=status.HTTP_401_UNAUTHORIZED)
             # get the object using phoneNumber and check if its the correct otp
             getOtp = VerificationDetails.objects.get(phone_number=phoneNumber)
-            if getOtp.otp != otp:
+            if getOtp.auth_otp != otp:
                 data = {
                     'status': 'failed',
                     'detail': 'incorect otp'
@@ -562,7 +562,7 @@ class AuthViewSet(GenericViewSet):
                 return Response(data, status=status.HTTP_401_UNAUTHORIZED)
             # if true check if its not expired
             # # expiration time is 15minutes
-            getDate = getOtp.dateCreated
+            getDate = getOtp.date_created
             expirationTime = 12*60
             currentTime = timezone.now()
             # check code if its still valid
@@ -608,7 +608,7 @@ class AuthViewSet(GenericViewSet):
             return Response(data, status=status.HTTP_401_UNAUTHORIZED)
         # get the object using phoneNumber and check if its the correct otp
         getOtp = VerificationDetails.objects.get(email=email)
-        if getOtp.otp != otp:
+        if getOtp.auth_otp != otp:
             data = {
                 'status': 'failed',
                 'detail': 'incorect otp'
@@ -616,7 +616,7 @@ class AuthViewSet(GenericViewSet):
             return Response(data, status=status.HTTP_401_UNAUTHORIZED)
         # if true check if its not expired
         # expiration time is 15minutes
-        getDate = getOtp.dateCreated
+        getDate = getOtp.date_created
         expirationTime = 15*60
         currentTime = timezone.now()
         # check code if its still valid
