@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import UserManager, AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.base_user import BaseUserManager
 from django.core.validators import RegexValidator, EmailValidator
 import uuid
 from django_countries.fields import CountryField
