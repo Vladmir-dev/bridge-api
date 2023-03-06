@@ -1,20 +1,21 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, PostSerializer, PostsSerializer, ProfileRegister
+from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import exceptions as exc
 from rest_framework.decorators import action
 from rest_framework import status
 import re
 from rest_framework.exceptions import ValidationError
-from .models import User, Wallet, Posts, VerificationDetails
+from .models import User, VerificationDetails, Posts, Wallet
 from .services import emailValidator, sexValidator, get_token_for_account
 from rest_framework.serializers import Serializer
 from django.forms.models import model_to_dict
 from rest_framework.permissions import IsAuthenticated
 import json
-from bridge.base.methods import createCode, timedifference, sendEmail
+from bridge.base.methods import createCode, timedifference, sendEmail, generate_username
 from django.utils import timezone
+
 
 # Create your views here.
 
@@ -85,15 +86,18 @@ class AuthViewSet(GenericViewSet):
             raise ValidationError(
                 "You must accept our terms of service and privacy policy")
 
+        #username
+        username = generate_username(email)
+    
         # create user
-        user = User(first_name=serializer.data['first_name'], phone_number=phone_number,
-                    last_name=serializer.data['last_name'], email=email, accepted_terms=accepted_terms)
-        user.set_password(password)
+        user = User.objects.create_user(username=username, first_name=serializer.data['first_name'], phone_number=phone_number,
+                    last_name=serializer.data['last_name'], email=email, accepted_terms=accepted_terms, password=password)
+        # user.set_password(password)
         user.save()
         print("user created")
         # get a token for account
-        user.token = get_token_for_account(user, "authentication")
-        user.save()
+        # user.token = get_token_for_account(user, "authentication")
+        # user.save()
 
         # create wallet
         wallet = Wallet(user=user)
@@ -244,6 +248,7 @@ class AuthViewSet(GenericViewSet):
                     return Response(data, status=status.HTTP_401_UNAUTHORIZED)
 
                 if user.check_password(password):
+                    # token = Token.objects.get(user=user)
                     data = {
                         "token": user.token,
                         "verified": user.verified
@@ -270,6 +275,8 @@ class AuthViewSet(GenericViewSet):
                         return Response(data, status=status.HTTP_401_UNAUTHORIZED)
 
                     if user.check_password(password):
+                        # token = Token.objects.get(user=user)
+                        # print("User token",user)
                         data = {
                             "token": user.token,
                             "verified": user.verified
@@ -282,8 +289,9 @@ class AuthViewSet(GenericViewSet):
                         return Response(data, status=status.HTTP_401_UNAUTHORIZED)
 
                 if user.check_password(password):
+                    # token = Token.objects.get(user=user)
                     data = {
-                        "token": user.token,
+                        "token":user.token,
                         "verified": user.verified
                     }
                     return Response(data, status=status.HTTP_200_OK)
@@ -354,6 +362,7 @@ class AuthViewSet(GenericViewSet):
 
         return Response(status=status.HTTP_201_CREATED)
 
+
     @action(detail=False, methods=['POST'], url_path="get_posts/(?P<id>[0-9A-Za-z_\-]+)")
     def get_post(self, request, id):
         # serializer
@@ -405,54 +414,54 @@ class AuthViewSet(GenericViewSet):
             }
             return Response(data, status = status.HTTP_403_FORBIDDEN)
         
-        #fieldsValidator(fieldToAuthenticate, 'verificationDetails')
-        # if fieldToAuthenticate == 'phone_number':
-        #     phoneNumber = request.data.get("phone_number")
-        #     if phoneNumber is None or phoneNumber =="":
-        #         data ={
-        #             'error': 'check phone Number field for errors'
-        #             }
-        #         return Response(data, status = status.HTTP_403_FORBIDDEN)
+        fieldsValidator(fieldToAuthenticate, 'verificationDetails')
+        if fieldToAuthenticate == 'phone_number':
+            phoneNumber = request.data.get("phone_number")
+            if phoneNumber is None or phoneNumber =="":
+                data ={
+                    'error': 'check phone Number field for errors'
+                    }
+                return Response(data, status = status.HTTP_403_FORBIDDEN)
             
-        #     checkPhoneNumberInDb = User.objects.filter(phone_number= phoneNumber)
-        #     if not checkPhoneNumberInDb:
-        #         data = {
-        #             'status': 'failed',
-        #             'detail': 'there is no account with that phone number'
-        #         }
-        #         return Response(data, status = status.HTTP_401_UNAUTHORIZED)
+            checkPhoneNumberInDb = User.objects.filter(phone_number= phoneNumber)
+            if not checkPhoneNumberInDb:
+                data = {
+                    'status': 'failed',
+                    'detail': 'there is no account with that phone number'
+                }
+                return Response(data, status = status.HTTP_401_UNAUTHORIZED)
             
-        #     #generate random code
-        #     authOTP= createCode()
-        #     print(authOTP)
-        #     #if instance is already there just update otp
-        #     checkPhoneNumber = VerificationDetails.objects.filter(phone_number= phoneNumber)
-        #     if checkPhoneNumber:
-        #         currentTime = timezone.now()
-        #         checkPhoneNumber.update(otp = authOTP, dateCreated= currentTime)
-        #         phoneNumber = '+'+ phoneNumber
-        #         message = 'Your verification code is '+ authOTP
-        #         # sendSMS(phoneNumber,message)
-        #         data = {
-        #             'status': 'success',
-        #             'detail': 'OTP sent'
-        #         }
-        #         return Response(data, status = status.HTTP_200_OK)
+            #generate random code
+            authOTP= createCode()
+            print(authOTP)
+            #if instance is already there just update otp
+            checkPhoneNumber = VerificationDetails.objects.filter(phone_number= phoneNumber)
+            if checkPhoneNumber:
+                currentTime = timezone.now()
+                checkPhoneNumber.update(otp = authOTP, dateCreated= currentTime)
+                phoneNumber = '+'+ phoneNumber
+                message = 'Your verification code is '+ authOTP
+                # sendSMS(phoneNumber,message)
+                data = {
+                    'status': 'success',
+                    'detail': 'OTP sent'
+                }
+                return Response(data, status = status.HTTP_200_OK)
             
-        #     #register otp in database
-        #     registerOTP = VerificationDetails(phone_number = phoneNumber, otp = authOTP)
-        #     registerOTP.save()
-        #     #send sms
-        #     phoneNumber = '+'+ phoneNumber
-        #     message = 'Your verification code is '+ authOTP
-        #     sendSMS(phoneNumber, message)
+            #register otp in database
+            registerOTP = VerificationDetails(phone_number = phoneNumber, otp = authOTP)
+            registerOTP.save()
+            #send sms
+            phoneNumber = '+'+ phoneNumber
+            message = 'Your verification code is '+ authOTP
+            sendSMS(phoneNumber, message)
 
     
-        #     data = {
-        #         'status': 'success',
-        #         'detail': 'OTP sent'
-        #         }
-        #     return JsonResponse(data, status = status.HTTP_200_OK)
+            data = {
+                'status': 'success',
+                'detail': 'OTP sent'
+                }
+            return JsonResponse(data, status = status.HTTP_200_OK)
         
 
         email = request.data.get("email")
