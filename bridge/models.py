@@ -237,6 +237,7 @@ class ChatMessage(models.Model):
         super().save(*args, **kwargs)
         if self.photo:
             compress_img(self.photo)
+            
 
 # # add image field
 class Posts(models.Model):

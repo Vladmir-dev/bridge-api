@@ -1,13 +1,13 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer
+from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer, ChatSerializer
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import exceptions as exc
 from rest_framework.decorators import action
 from rest_framework import status
 import re
 from rest_framework.exceptions import ValidationError
-from .models import User, VerificationDetails, Posts, Wallet
+from .models import User, VerificationDetails, Posts, Wallet, ChatMessage
 from .services import emailValidator, sexValidator, get_token_for_account
 from rest_framework.serializers import Serializer
 from django.forms.models import model_to_dict
@@ -340,60 +340,60 @@ class AuthViewSet(GenericViewSet):
         #     return Response(data, status=status.HTTP_401_UNAUTHORIZED)
         
 
-    @action(detail=False, methods=['POST'], url_path="make_post")
-    def make_post(self, request):
+    # @action(detail=False, methods=['POST'], url_path="make_post")
+    # def make_post(self, request):
 
-        # serializer
-        serializer = PostsSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    #     # serializer
+    #     serializer = PostsSerializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
 
-        # verify user
+    #     # verify user
 
-        try:
-            user = User.objects.filter(token=serializer.data['token'])
-        except:
-            raise ValidationError("User does not exist")
+    #     try:
+    #         user = User.objects.filter(token=serializer.data['token'])
+    #     except:
+    #         raise ValidationError("User does not exist")
 
-        user = User.objects.get(token=serializer.data['token'])
+    #     user = User.objects.get(token=serializer.data['token'])
 
-        # print message
-        print("this is the message =======>", serializer.data['message'])
-        post = Posts(user=user, message=serializer.data['message'])
-        post.save()
+    #     # print message
+    #     print("this is the message =======>", serializer.data['message'])
+    #     post = Posts(user=user, message=serializer.data['message'])
+    #     post.save()
 
-        return Response(status=status.HTTP_201_CREATED)
+    #     return Response(status=status.HTTP_201_CREATED)
 
 
-    @action(detail=False, methods=['POST'], url_path="get_posts/(?P<id>[0-9A-Za-z_\-]+)")
-    def get_post(self, request, id):
-        # serializer
-        serializer = TokenSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    # @action(detail=False, methods=['POST'], url_path="get_posts/(?P<id>[0-9A-Za-z_\-]+)")
+    # def get_post(self, request, id):
+    #     # serializer
+    #     serializer = TokenSerializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
 
-        # get user
+    #     # get user
 
-        try:
-            user = User.objects.filter(id=id)
-        except:
-            raise ValidationError("User does not exist")
+    #     try:
+    #         user = User.objects.filter(id=id)
+    #     except:
+    #         raise ValidationError("User does not exist")
 
-        user = User.objects.get(id=id)
+    #     user = User.objects.get(id=id)
 
-        # check wether token matches
+    #     # check wether token matches
 
-        if user.token == serializer.data['token']:
-            user_posts = Posts.objects.get(user=user)
-            # print("==>",user_posts)
-            post_serializer = PostsSerializer(user_posts)
-            # print(post_serializer.data)
-            # user_serializer = UserSerializer(user)
-            return Response(post_serializer.data, status=status.HTTP_200_OK)
+    #     if user.token == serializer.data['token']:
+    #         user_posts = Posts.objects.get(user=user)
+    #         # print("==>",user_posts)
+    #         post_serializer = PostsSerializer(user_posts)
+    #         # print(post_serializer.data)
+    #         # user_serializer = UserSerializer(user)
+    #         return Response(post_serializer.data, status=status.HTTP_200_OK)
 
-        else:
-            data = {
-                "data": "failed credentials"
-            }
-            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+    #     else:
+    #         data = {
+    #             "data": "failed credentials"
+    #         }
+    #         return Response(data, status=status.HTTP_401_UNAUTHORIZED)
 
 
     @action(detail=False,methods=["POST"], url_path="send_otp")
@@ -660,3 +660,17 @@ class PostCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         return Posts.objects.filter(user=user)
+
+
+class ChatCreateView(generics.ListCreateAPIView):
+    queryset = ChatMessage.objects.all()
+    serializer_class = ChatSerializer
+    authentication_classes = [CustomAuthentication,]
+    permission_classes = [IsAuthenticated,]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        user = self.request.user
+        return ChatMessage.objects.filter(user=user)
