@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer
+from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import exceptions as exc
 from rest_framework.decorators import action
@@ -12,10 +12,11 @@ from .services import emailValidator, sexValidator, get_token_for_account
 from rest_framework.serializers import Serializer
 from django.forms.models import model_to_dict
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics
 import json
 from bridge.base.methods import createCode, timedifference, sendEmail, generate_username
 from django.utils import timezone
-
+from .permissions import CustomAuthentication
 
 # Create your views here.
 
@@ -343,7 +344,7 @@ class AuthViewSet(GenericViewSet):
     def make_post(self, request):
 
         # serializer
-        serializer = PostSerializer(data=request.data)
+        serializer = PostsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         # verify user
@@ -644,3 +645,18 @@ class AuthViewSet(GenericViewSet):
             'detail': 'otp expired'
         }
         return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+
+
+
+class PostCreateView(generics.ListCreateAPIView):
+    queryset = Posts.objects.all()
+    serializer_class = PostsSerializer
+    authentication_classes = [CustomAuthentication,]
+    permission_classes = [IsAuthenticated,]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        user = self.request.user
+        return Posts.objects.filter(user=user)

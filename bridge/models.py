@@ -28,18 +28,86 @@ def get_user_photo_file_path(instance, filename):
     return get_file_path(instance, filename, "user/photo")
 
 
+# def get_id():
+#     pass
 
-# class Token(models.Model):
-#     user = models.OneToOneField(
-#         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='auth_token'
-#     )
-#     key = models.CharField(max_length=40, unique=True)
-#     created_at = models.DateTimeField(default=timezone.now)
+def generate_token():
+    dt = datetime.now() + timedelta(days=60)
+    
+    payload = {
+        # 'id':self.pk,
+        'exp':int(dt.strftime('%s'))
+    }
+    token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+    print("token======>", token)
+    
+    return token
 
-#     def save(self, *args, **kwargs):
-#         if not self.key:
-#             self.key = Token.generate_key()
-#         return super(Token, self).save(*args, **kwargs)
+
+
+def get_size_format(b, factor=1024, suffix="B"):
+    """
+    Scale bytes to its proper byte format
+    e.g:
+        1253656 => '1.20MB'
+        1253656678 => '1.17GB'
+    """
+    for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
+        if b < factor:
+            return f"{b:.2f}{unit}{suffix}"
+        b /= factor
+    return f"{b:.2f}Y{suffix}"
+
+
+def compress_img(image_name, new_size_ratio=0.5, quality=90, width=None, height=None, to_jpg=False):
+        #load the image to memory
+        img = Image.open(image_name.path)
+
+        #print the original image shape
+        print("[*] Image Shape: ", img.size)
+
+        # get the original image size in bytes
+        image_size = os.path.getsize(image_name.path)
+        print("[*] Size before compression:", get_size_format(image_size))
+
+        #begin compression with ratio
+        if new_size_ratio < 1.0:
+            #if resizing is below 1 then multiply width & height with this ratio to reduce the image size
+            img =  img.resize((int(img.size[0] * new_size_ratio), int(img.size[1] * new_size_ratio)), Image.ANTIALIAS)
+
+            #print new image shape
+            print("[+] New Image Shape: ", img.size)
+        
+        elif width and height:
+            #if image and height are set resize them instead
+            img = img.resize((width, height))
+            
+            #print the new image shape
+            print("[+] New Image Shape: ", img.size)
+
+        # #split the filename and extension
+        # filename, ext = os.path.splitext(image_name)
+
+        # if to_jpg:
+        #     #change the extension to jpg
+        #     new_filename = f"{filename}_compressed.jpg"
+        # else:
+        #     new_filename = f"{filename}_compressed{ext}"
+
+        # img.save(image_name.path, quality=quality, optimize=True)
+        # get the image size after compression in bytes
+        
+
+        try:
+            #save the image with the corresponding quality and optimize set to True
+            img.save(image_name.path, quality=quality, optimize=True)
+            image_size = os.path.getsize(image_name.path)
+            print("[+] Size After compression:", get_size_format(image_size))
+        except OSError:
+            #convert the image to RGB mode first
+            img = img.convert("RGB")
+            img.save(image_name.path, quality=quality, optimize=True)
+
 
 
 class CustomUserManager(BaseUserManager):
@@ -52,6 +120,7 @@ class CustomUserManager(BaseUserManager):
             raise ValueError("Email field must be set")
         
         email = self.normalize_email(email)
+        extra_fields['token'] = generate_token()
         user = self.model(username=username, email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -89,7 +158,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     country = CountryField(blank=True)
     nationality = CountryField(blank=True)
     city = models.CharField(max_length=200, blank=True)
-    token = models.CharField(max_length=550, null=True, blank=True)
+    token = models.CharField(max_length=550, null=True, blank=True, unique=True)
     photo = models.ImageField(
         upload_to=get_user_photo_file_path, null=True, blank=True)
     background_photo = models.ImageField(
@@ -109,9 +178,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.username
 
-    @property
-    def token(self):
-        return self.generate_token()
+    # @property
+    # def token(self):
+    #     return self.generate_token()
 
 
     def get_full_name(self):
@@ -119,13 +188,20 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-
-        SIZE = (300, 300)
-
+        
         if self.photo:
-            img = Image.open(self.photo.path)
-            img.thumbnail(SIZE)
-            img.save(self.photo.path)
+            compress_img(self.photo)
+        #     img = Image.open(self.photo)
+        #     width = img.width
+        #     height = img.height
+        #     print(f'width: {width}, height: {height}')
+        
+        # SIZE = (300, 300)
+
+        # if self.photo:
+        #     img = Image.open(self.photo.path)
+        #     img.thumbnail(SIZE)
+        #     img.save(self.photo.path)
 
         # for field_name in ['photo', 'background_photo']:
         #     field = getattr(User, field_name)
@@ -133,18 +209,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         #         img = Image.open(field)
         #         img.thumbnail(SIZE)
         #         img.save(self.field_name.path)
+    
 
-    def generate_token(self):
-        dt = datetime.now() + timedelta(days=60)
-        
-        payload = {
-            'id':self.pk,
-            'exp':int(dt.strftime('%s'))
-        }
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-        print("token======>", token)
-        
-        return token
+    
+
+
+
+    
 
 
 
@@ -162,6 +233,10 @@ class ChatMessage(models.Model):
     def __str__(self):
         return self.message
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.photo:
+            compress_img(self.photo)
 
 # # add image field
 class Posts(models.Model):
@@ -174,6 +249,12 @@ class Posts(models.Model):
 
     def __str__(self):
         return "{0} : {1}".format(self.user, self.message)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.photo:
+            compress_img(self.photo)
 
 
 class RelationShip(models.Model):
@@ -206,6 +287,10 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.comment
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        compress_img(self.photo)
 
 
 class Likes(models.Model):
@@ -221,6 +306,12 @@ class VerificationDetails(models.Model):
     phone_number = models.CharField(max_length=50)
     auth_otp = models.CharField(max_length=50)
     date_created = models.DateTimeField(auto_now_add=True)
+
+
+class Notifications(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    created_at = models.DateField(auto_now_add=True)
 
 
 # class Profile(models.Model):
