@@ -338,6 +338,27 @@ class AuthViewSet(GenericViewSet):
         #         "data": "failed credentials"
         #     }
         #     return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+
+
+    @action(detail=False, methods=["GET"], url_path="wallet_balance/(?P<id>[0-9A-Za-z_\-]+)")
+    def checkBalance(self, request,id, **kwargs):
+        try:
+            user = User.objects.filter(id=id)
+        except:
+            data = {
+                'status': 'failed',
+                'details': 'User does not exist'
+            }
+            return Response(data, status = status.HTTP_403_FORBIDDEN)
+        
+        user = User.objects.get(id=id)
+        # print(user.username)
+        wallet = Wallet.objects.get(user=user)
+        # accountBalance = getUser.amount
+        data = {
+            'amount': wallet.amount
+        }
+        return Response(data, status = status.HTTP_200_OK)
         
 
     # @action(detail=False, methods=['POST'], url_path="make_post")
