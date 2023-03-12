@@ -60,3 +60,8 @@ class ChatSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatMessage
         fields = "__all__"
+
+
+class SendMoneySerializer(serializers.Serializer):
+    receiver = serializers.CharField(required=True)
+    amount = serializers.FloatField(required=True)

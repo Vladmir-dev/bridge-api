@@ -1,13 +1,13 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer, ChatSerializer
+from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer, ChatSerializer,SendMoneySerializer
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import exceptions as exc
 from rest_framework.decorators import action
 from rest_framework import status
 import re
 from rest_framework.exceptions import ValidationError
-from .models import User, VerificationDetails, Posts, Wallet, ChatMessage
+from .models import User, VerificationDetails, Posts, Wallet, ChatMessage, Notifications
 from .services import emailValidator, sexValidator, get_token_for_account
 from rest_framework.serializers import Serializer
 from django.forms.models import model_to_dict
@@ -341,7 +341,8 @@ class AuthViewSet(GenericViewSet):
 
 
     @action(detail=False, methods=["GET"], url_path="wallet_balance/(?P<id>[0-9A-Za-z_\-]+)")
-    def checkBalance(self, request,id, **kwargs):
+    def check_balance(self, request,id, **kwargs):
+        permission_classes = [IsAuthenticated,]
         try:
             user = User.objects.filter(id=id)
         except:
@@ -359,7 +360,76 @@ class AuthViewSet(GenericViewSet):
             'amount': wallet.amount
         }
         return Response(data, status = status.HTTP_200_OK)
+
+
+    @action(detail=False, methods=["POST"], url_path="send_money/(?P<id>[0-9A-Za-z_\-]+)")
+    def send_money(self, request, id, **kwargs):
+        # permission_classes = [IsAuthenticated,]
+        serializer = SendMoneySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+
+            sender = User.objects.get(id=id)
+        except:
+            raise ValidationError("User doesnot exist")
+
+        sender_wallet = Wallet.objects.get(user=sender)
+
+        #king1ssem_10940414
+        #kingssem_88495250
+
+        try:
+
+            reciever = User.objects.get(username=serializer.data['receiver'])
+        except:
+            raise ValidationError("User doesnot exist")
+
+        reciever_wallet = Wallet.objects.get(user=reciever)
         
+        #check if sender has sufficent amount
+        print("sender amount ==>", float(sender_wallet.amount))
+        print("amount to send ==>", float(serializer.data['amount']))
+        print("difference", float(sender_wallet.amount) - float(serializer.data['amount']))
+        difference = float(sender_wallet.amount) - float(serializer.data['amount'])
+
+        if difference > 0:
+
+            sender_wallet.amount -=  serializer.data['amount']
+            sender_wallet.total_sent += serializer.data['amount']
+            sender_wallet.save(update_fields=['amount','total_sent'])
+
+            reciever_wallet.amount +=  serializer.data['amount']
+            reciever_wallet.total_received += serializer.data['amount']
+            
+            sender_msg = f"You sent {serializer.data['amount']} to {reciever.username}"
+            sender_not = Notifications(user=sender, message=sender_msg)
+            sender_not.save()
+
+            reciever_msg = f"You have received {serializer.data['amount']} from {sender.username}"
+            reciever_not = Notifications(user=reciever, message=sender_msg)
+            reciever_not.save()
+
+            # transaction = Transactions(sender=getSender.username, amount=serializer.data['amount'], receiver=receiver.username,status='complete', trans_type='send')
+            # transaction.save()
+
+            # res = "{0} has received {1} UGX from {2}  remaining balance {3}".format(reciever_wallet.wallet_no,serializer.data['amount'], sender.username, reciever_wallet.amount)
+            data = {
+                "status":"successfull",
+                "details": f"succesfully sent {serializer.data['amount']} to {serializer.data['receiver']}"
+            }
+
+        else:
+            data = {
+                'status': 'failed',
+                'details': 'Insuficient funds'
+            }
+            sender_msg = f"You have insuficient funds to complete this transaction"
+            sender_not = Notifications(user=sender, message=sender_msg)
+            sender_not.save()
+
+        return Response(data, status=status.HTTP_200_OK)
+     
 
     # @action(detail=False, methods=['POST'], url_path="make_post")
     # def make_post(self, request):
