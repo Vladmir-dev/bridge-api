@@ -401,12 +401,13 @@ class AuthViewSet(GenericViewSet):
 
             reciever_wallet.amount +=  serializer.data['amount']
             reciever_wallet.total_received += serializer.data['amount']
+            reciever_wallet.save(update_fields=['amount','total_received'])
             
-            sender_msg = f"You sent {serializer.data['amount']} to {reciever.username}"
+            sender_msg = f"You sent UGX {serializer.data['amount']} to {reciever.username} current balance is UGX {sender_wallet.amount}"
             sender_not = Notifications(user=sender, message=sender_msg)
             sender_not.save()
 
-            reciever_msg = f"You have received {serializer.data['amount']} from {sender.username}"
+            reciever_msg = f"You have received {serializer.data['amount']} from {sender.username} current balance is UGX {reciever_wallet.amount}"
             reciever_not = Notifications(user=reciever, message=sender_msg)
             reciever_not.save()
 
