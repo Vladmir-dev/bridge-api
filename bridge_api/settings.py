@@ -59,7 +59,10 @@ MIDDLEWARE = [
 ]
 
 REST_FRAMEWORK = {
-  'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
+  'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+#   'DEFAULT_AUTHENTICATION_CLASSES':[
+#     'rest_framework.authentication.TokenAuthentication'
+#   ]
 }
 
 ROOT_URLCONF = 'bridge_api.urls'
@@ -124,7 +127,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-# AUTH_USER_MODEL = 'bridge.User'
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
@@ -153,3 +156,5 @@ EMAIL_HOST_PASSWORD = 'tfzielauaowcfyvo'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+AUTH_USER_MODEL = 'bridge.User'

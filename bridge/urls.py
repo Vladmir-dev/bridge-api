@@ -2,7 +2,7 @@ from drf_yasg import openapi
 from django.urls import include
 from django.urls import re_path as url
 from rest_framework import routers
-from .views import AuthViewSet
+from .views import AuthViewSet,PostCreateView,ChatCreateView
 from django.conf import settings
 from django.views.generic import TemplateView
 from rest_framework import permissions
@@ -31,10 +31,13 @@ else:
 
 
 router.register(r"auth", AuthViewSet, basename="auth")
+# router.register(r'auth/posts', PostCreateView)
 
 urlpatterns = [
     url(r'^api/v1/', include(router.urls)),
     url(r'^$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    url(r'^api/v1/auth/create-post', PostCreateView.as_view(), name="post_create"),
+    url(r'^api/v1/auth/chat', ChatCreateView.as_view(), name="chat")
 ]
 
 urlpatterns += static(settings.STATIC_URL)

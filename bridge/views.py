@@ -1,20 +1,22 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, PostSerializer, PostsSerializer, ProfileRegister
+from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer, ChatSerializer,SendMoneySerializer
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import exceptions as exc
 from rest_framework.decorators import action
 from rest_framework import status
 import re
 from rest_framework.exceptions import ValidationError
-from .models import User, Wallet, Posts, VerificationDetails
+from .models import User, VerificationDetails, Posts, Wallet, ChatMessage, Notifications
 from .services import emailValidator, sexValidator, get_token_for_account
 from rest_framework.serializers import Serializer
 from django.forms.models import model_to_dict
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics
 import json
-from bridge.base.methods import createCode, timedifference, sendEmail
+from bridge.base.methods import createCode, timedifference, sendEmail, generate_username
 from django.utils import timezone
+from .permissions import CustomAuthentication
 
 # Create your views here.
 
@@ -85,15 +87,18 @@ class AuthViewSet(GenericViewSet):
             raise ValidationError(
                 "You must accept our terms of service and privacy policy")
 
+        #username
+        username = generate_username(email)
+    
         # create user
-        user = User(first_name=serializer.data['first_name'], phone_number=phone_number,
-                    last_name=serializer.data['last_name'], email=email, accepted_terms=accepted_terms)
-        user.set_password(password)
+        user = User.objects.create_user(username=username, first_name=serializer.data['first_name'], phone_number=phone_number,
+                    last_name=serializer.data['last_name'], email=email, accepted_terms=accepted_terms, password=password)
+        # user.set_password(password)
         user.save()
         print("user created")
         # get a token for account
-        user.token = get_token_for_account(user, "authentication")
-        user.save()
+        # user.token = get_token_for_account(user, "authentication")
+        # user.save()
 
         # create wallet
         wallet = Wallet(user=user)
@@ -244,6 +249,7 @@ class AuthViewSet(GenericViewSet):
                     return Response(data, status=status.HTTP_401_UNAUTHORIZED)
 
                 if user.check_password(password):
+                    # token = Token.objects.get(user=user)
                     data = {
                         "token": user.token,
                         "verified": user.verified
@@ -270,6 +276,8 @@ class AuthViewSet(GenericViewSet):
                         return Response(data, status=status.HTTP_401_UNAUTHORIZED)
 
                     if user.check_password(password):
+                        # token = Token.objects.get(user=user)
+                        # print("User token",user)
                         data = {
                             "token": user.token,
                             "verified": user.verified
@@ -282,8 +290,9 @@ class AuthViewSet(GenericViewSet):
                         return Response(data, status=status.HTTP_401_UNAUTHORIZED)
 
                 if user.check_password(password):
+                    # token = Token.objects.get(user=user)
                     data = {
-                        "token": user.token,
+                        "token":user.token,
                         "verified": user.verified
                     }
                     return Response(data, status=status.HTTP_200_OK)
@@ -329,61 +338,154 @@ class AuthViewSet(GenericViewSet):
         #         "data": "failed credentials"
         #     }
         #     return Response(data, status=status.HTTP_401_UNAUTHORIZED)
-        
 
-    @action(detail=False, methods=['POST'], url_path="make_post")
-    def make_post(self, request):
 
-        # serializer
-        serializer = PostSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        # verify user
-
-        try:
-            user = User.objects.filter(token=serializer.data['token'])
-        except:
-            raise ValidationError("User does not exist")
-
-        user = User.objects.get(token=serializer.data['token'])
-
-        # print message
-        print("this is the message =======>", serializer.data['message'])
-        post = Posts(user=user, message=serializer.data['message'])
-        post.save()
-
-        return Response(status=status.HTTP_201_CREATED)
-
-    @action(detail=False, methods=['POST'], url_path="get_posts/(?P<id>[0-9A-Za-z_\-]+)")
-    def get_post(self, request, id):
-        # serializer
-        serializer = TokenSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        # get user
-
+    @action(detail=False, methods=["GET"], url_path="wallet_balance/(?P<id>[0-9A-Za-z_\-]+)")
+    def check_balance(self, request,id, **kwargs):
+        permission_classes = [IsAuthenticated,]
         try:
             user = User.objects.filter(id=id)
         except:
-            raise ValidationError("User does not exist")
-
+            data = {
+                'status': 'failed',
+                'details': 'User does not exist'
+            }
+            return Response(data, status = status.HTTP_403_FORBIDDEN)
+        
         user = User.objects.get(id=id)
+        # print(user.username)
+        wallet = Wallet.objects.get(user=user)
+        # accountBalance = getUser.amount
+        data = {
+            'amount': wallet.amount
+        }
+        return Response(data, status = status.HTTP_200_OK)
 
-        # check wether token matches
 
-        if user.token == serializer.data['token']:
-            user_posts = Posts.objects.get(user=user)
-            # print("==>",user_posts)
-            post_serializer = PostsSerializer(user_posts)
-            # print(post_serializer.data)
-            # user_serializer = UserSerializer(user)
-            return Response(post_serializer.data, status=status.HTTP_200_OK)
+    @action(detail=False, methods=["POST"], url_path="send_money/(?P<id>[0-9A-Za-z_\-]+)")
+    def send_money(self, request, id, **kwargs):
+        # permission_classes = [IsAuthenticated,]
+        serializer = SendMoneySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+
+            sender = User.objects.get(id=id)
+        except:
+            raise ValidationError("User doesnot exist")
+
+        sender_wallet = Wallet.objects.get(user=sender)
+
+        #king1ssem_10940414
+        #kingssem_88495250
+
+        try:
+
+            reciever = User.objects.get(username=serializer.data['receiver'])
+        except:
+            raise ValidationError("User doesnot exist")
+
+        reciever_wallet = Wallet.objects.get(user=reciever)
+        
+        #check if sender has sufficent amount
+        print("sender amount ==>", float(sender_wallet.amount))
+        print("amount to send ==>", float(serializer.data['amount']))
+        print("difference", float(sender_wallet.amount) - float(serializer.data['amount']))
+        difference = float(sender_wallet.amount) - float(serializer.data['amount'])
+
+        if difference > 0:
+
+            sender_wallet.amount -=  serializer.data['amount']
+            sender_wallet.total_sent += serializer.data['amount']
+            sender_wallet.save(update_fields=['amount','total_sent'])
+
+            reciever_wallet.amount +=  serializer.data['amount']
+            reciever_wallet.total_received += serializer.data['amount']
+            reciever_wallet.save(update_fields=['amount','total_received'])
+            
+            sender_msg = f"You sent UGX {serializer.data['amount']} to {reciever.username} current balance is UGX {sender_wallet.amount}"
+            sender_not = Notifications(user=sender, message=sender_msg)
+            sender_not.save()
+
+            reciever_msg = f"You have received {serializer.data['amount']} from {sender.username} current balance is UGX {reciever_wallet.amount}"
+            reciever_not = Notifications(user=reciever, message=sender_msg)
+            reciever_not.save()
+
+            # transaction = Transactions(sender=getSender.username, amount=serializer.data['amount'], receiver=receiver.username,status='complete', trans_type='send')
+            # transaction.save()
+
+            # res = "{0} has received {1} UGX from {2}  remaining balance {3}".format(reciever_wallet.wallet_no,serializer.data['amount'], sender.username, reciever_wallet.amount)
+            data = {
+                "status":"successfull",
+                "details": f"succesfully sent {serializer.data['amount']} to {serializer.data['receiver']}"
+            }
 
         else:
             data = {
-                "data": "failed credentials"
+                'status': 'failed',
+                'details': 'Insuficient funds'
             }
-            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+            sender_msg = f"You have insuficient funds to complete this transaction"
+            sender_not = Notifications(user=sender, message=sender_msg)
+            sender_not.save()
+
+        return Response(data, status=status.HTTP_200_OK)
+     
+
+    # @action(detail=False, methods=['POST'], url_path="make_post")
+    # def make_post(self, request):
+
+    #     # serializer
+    #     serializer = PostsSerializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+
+    #     # verify user
+
+    #     try:
+    #         user = User.objects.filter(token=serializer.data['token'])
+    #     except:
+    #         raise ValidationError("User does not exist")
+
+    #     user = User.objects.get(token=serializer.data['token'])
+
+    #     # print message
+    #     print("this is the message =======>", serializer.data['message'])
+    #     post = Posts(user=user, message=serializer.data['message'])
+    #     post.save()
+
+    #     return Response(status=status.HTTP_201_CREATED)
+
+
+    # @action(detail=False, methods=['POST'], url_path="get_posts/(?P<id>[0-9A-Za-z_\-]+)")
+    # def get_post(self, request, id):
+    #     # serializer
+    #     serializer = TokenSerializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+
+    #     # get user
+
+    #     try:
+    #         user = User.objects.filter(id=id)
+    #     except:
+    #         raise ValidationError("User does not exist")
+
+    #     user = User.objects.get(id=id)
+
+    #     # check wether token matches
+
+    #     if user.token == serializer.data['token']:
+    #         user_posts = Posts.objects.get(user=user)
+    #         # print("==>",user_posts)
+    #         post_serializer = PostsSerializer(user_posts)
+    #         # print(post_serializer.data)
+    #         # user_serializer = UserSerializer(user)
+    #         return Response(post_serializer.data, status=status.HTTP_200_OK)
+
+    #     else:
+    #         data = {
+    #             "data": "failed credentials"
+    #         }
+    #         return Response(data, status=status.HTTP_401_UNAUTHORIZED)
 
 
     @action(detail=False,methods=["POST"], url_path="send_otp")
@@ -405,54 +507,54 @@ class AuthViewSet(GenericViewSet):
             }
             return Response(data, status = status.HTTP_403_FORBIDDEN)
         
-        #fieldsValidator(fieldToAuthenticate, 'verificationDetails')
-        # if fieldToAuthenticate == 'phone_number':
-        #     phoneNumber = request.data.get("phone_number")
-        #     if phoneNumber is None or phoneNumber =="":
-        #         data ={
-        #             'error': 'check phone Number field for errors'
-        #             }
-        #         return Response(data, status = status.HTTP_403_FORBIDDEN)
+        fieldsValidator(fieldToAuthenticate, 'verificationDetails')
+        if fieldToAuthenticate == 'phone_number':
+            phoneNumber = request.data.get("phone_number")
+            if phoneNumber is None or phoneNumber =="":
+                data ={
+                    'error': 'check phone Number field for errors'
+                    }
+                return Response(data, status = status.HTTP_403_FORBIDDEN)
             
-        #     checkPhoneNumberInDb = User.objects.filter(phone_number= phoneNumber)
-        #     if not checkPhoneNumberInDb:
-        #         data = {
-        #             'status': 'failed',
-        #             'detail': 'there is no account with that phone number'
-        #         }
-        #         return Response(data, status = status.HTTP_401_UNAUTHORIZED)
+            checkPhoneNumberInDb = User.objects.filter(phone_number= phoneNumber)
+            if not checkPhoneNumberInDb:
+                data = {
+                    'status': 'failed',
+                    'detail': 'there is no account with that phone number'
+                }
+                return Response(data, status = status.HTTP_401_UNAUTHORIZED)
             
-        #     #generate random code
-        #     authOTP= createCode()
-        #     print(authOTP)
-        #     #if instance is already there just update otp
-        #     checkPhoneNumber = VerificationDetails.objects.filter(phone_number= phoneNumber)
-        #     if checkPhoneNumber:
-        #         currentTime = timezone.now()
-        #         checkPhoneNumber.update(otp = authOTP, dateCreated= currentTime)
-        #         phoneNumber = '+'+ phoneNumber
-        #         message = 'Your verification code is '+ authOTP
-        #         # sendSMS(phoneNumber,message)
-        #         data = {
-        #             'status': 'success',
-        #             'detail': 'OTP sent'
-        #         }
-        #         return Response(data, status = status.HTTP_200_OK)
+            #generate random code
+            authOTP= createCode()
+            print(authOTP)
+            #if instance is already there just update otp
+            checkPhoneNumber = VerificationDetails.objects.filter(phone_number= phoneNumber)
+            if checkPhoneNumber:
+                currentTime = timezone.now()
+                checkPhoneNumber.update(otp = authOTP, dateCreated= currentTime)
+                phoneNumber = '+'+ phoneNumber
+                message = 'Your verification code is '+ authOTP
+                # sendSMS(phoneNumber,message)
+                data = {
+                    'status': 'success',
+                    'detail': 'OTP sent'
+                }
+                return Response(data, status = status.HTTP_200_OK)
             
-        #     #register otp in database
-        #     registerOTP = VerificationDetails(phone_number = phoneNumber, otp = authOTP)
-        #     registerOTP.save()
-        #     #send sms
-        #     phoneNumber = '+'+ phoneNumber
-        #     message = 'Your verification code is '+ authOTP
-        #     sendSMS(phoneNumber, message)
+            #register otp in database
+            registerOTP = VerificationDetails(phone_number = phoneNumber, otp = authOTP)
+            registerOTP.save()
+            #send sms
+            phoneNumber = '+'+ phoneNumber
+            message = 'Your verification code is '+ authOTP
+            sendSMS(phoneNumber, message)
 
     
-        #     data = {
-        #         'status': 'success',
-        #         'detail': 'OTP sent'
-        #         }
-        #     return JsonResponse(data, status = status.HTTP_200_OK)
+            data = {
+                'status': 'success',
+                'detail': 'OTP sent'
+                }
+            return JsonResponse(data, status = status.HTTP_200_OK)
         
 
         email = request.data.get("email")
@@ -635,3 +737,32 @@ class AuthViewSet(GenericViewSet):
             'detail': 'otp expired'
         }
         return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+
+
+
+class PostCreateView(generics.ListCreateAPIView):
+    queryset = Posts.objects.all()
+    serializer_class = PostsSerializer
+    authentication_classes = [CustomAuthentication,]
+    permission_classes = [IsAuthenticated,]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        user = self.request.user
+        return Posts.objects.filter(user=user)
+
+
+class ChatCreateView(generics.ListCreateAPIView):
+    queryset = ChatMessage.objects.all()
+    serializer_class = ChatSerializer
+    authentication_classes = [CustomAuthentication,]
+    permission_classes = [IsAuthenticated,]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        user = self.request.user
+        return ChatMessage.objects.filter(user=user)
