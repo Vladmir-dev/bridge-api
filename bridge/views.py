@@ -101,8 +101,13 @@ class AuthViewSet(GenericViewSet):
         # user.save()
 
         # create wallet
-        wallet = Wallet(user=user)
-        wallet.save()
+        # wallet = Wallet(user=user)
+        # wallet.save()
+
+        wallet = Wallet.objects.get(user=user)
+        message = f"Your wallet number is {wallet.wallet_no} welcome to bridge"
+        notific = Notifications(user=user, message=message)
+        notific.save()
 
         code = createCode()
         print("code ===>", code)
@@ -119,6 +124,8 @@ class AuthViewSet(GenericViewSet):
             verification = VerificationDetails(
                 email=user.email, auth_otp=code)
             sendEmail(email, code)
+        
+        # wallet = Wallet.objects.get(user=user)
 
         # phone_number = '+' + phone_number
         # message = "Your Verification code is" + code
@@ -197,6 +204,7 @@ class AuthViewSet(GenericViewSet):
         user.save()
 
         wallet = Wallet.objects.get(user=user)
+        
 
         query_set = UserSerializer(user)
         print(query_set)
@@ -333,12 +341,31 @@ class AuthViewSet(GenericViewSet):
             # user_serializer = UserSerializer(user)
         return Response(list(queryset), status=status.HTTP_200_OK)
 
-        # else:
-        #     data = {
-        #         "data": "failed credentials"
-        #     }
-        #     return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+    
 
+    @action(detail=False, methods=['GET'], url_path="allusers",)
+    def get_users(self, request):
+        permission_classes = [IsAuthenticated,] 
+        user_token = request.META.get('HTTP_AUTHORIZATION', '')
+        user_token = user_token.replace('Bearer ', '')
+        # user_token = str(user_token)
+        print("this is the token", user_token)
+
+        try:
+            user = User.objects.filter(token=user_token)
+        except:
+            raise ValidationError("User does not exist")
+
+        users = User.objects.values()
+
+        # check wether token matches
+
+        # if user.token == serializer.data['token']:
+        # queryset = User.objects.filter(token=user_token).values()
+            # user_serializer = UserSerializer(user)
+        return Response(users, status=status.HTTP_200_OK)
+
+      
 
     @action(detail=False, methods=["GET"], url_path="wallet_balance/(?P<id>[0-9A-Za-z_\-]+)")
     def check_balance(self, request,id, **kwargs):
@@ -361,10 +388,23 @@ class AuthViewSet(GenericViewSet):
         }
         return Response(data, status = status.HTTP_200_OK)
 
+    @action(detail=False, methods=["GET"], url_path="notifications/(?P<id>[0-9A-Za-z_\-]+)")
+    def get_notifications(self, request, id, **kwargs):
+        # permission_classes = [IsAuthenticated,]
+        
+        try:
+            user = User.objects.get(id=id)
+        except:
+            raise ValidationError("User doesnot exist")
+        
+        notifications = Notifications.objects.filter(user=user).values()
+        return Response(notifications, status=status.HTTP_200_OK)
+
+
 
     @action(detail=False, methods=["POST"], url_path="send_money/(?P<id>[0-9A-Za-z_\-]+)")
     def send_money(self, request, id, **kwargs):
-        # permission_classes = [IsAuthenticated,]
+        permission_classes = [IsAuthenticated,]
         serializer = SendMoneySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -507,54 +547,54 @@ class AuthViewSet(GenericViewSet):
             }
             return Response(data, status = status.HTTP_403_FORBIDDEN)
         
-        fieldsValidator(fieldToAuthenticate, 'verificationDetails')
-        if fieldToAuthenticate == 'phone_number':
-            phoneNumber = request.data.get("phone_number")
-            if phoneNumber is None or phoneNumber =="":
-                data ={
-                    'error': 'check phone Number field for errors'
-                    }
-                return Response(data, status = status.HTTP_403_FORBIDDEN)
+        # # fieldsValidator(fieldToAuthenticate, 'verificationDetails')
+        # if fieldToAuthenticate == 'phone_number':
+        #     phoneNumber = request.data.get("phone_number")
+        #     if phoneNumber is None or phoneNumber =="":
+        #         data ={
+        #             'error': 'check phone Number field for errors'
+        #             }
+        #         return Response(data, status = status.HTTP_403_FORBIDDEN)
             
-            checkPhoneNumberInDb = User.objects.filter(phone_number= phoneNumber)
-            if not checkPhoneNumberInDb:
-                data = {
-                    'status': 'failed',
-                    'detail': 'there is no account with that phone number'
-                }
-                return Response(data, status = status.HTTP_401_UNAUTHORIZED)
+        #     checkPhoneNumberInDb = User.objects.filter(phone_number= phoneNumber)
+        #     if not checkPhoneNumberInDb:
+        #         data = {
+        #             'status': 'failed',
+        #             'detail': 'there is no account with that phone number'
+        #         }
+        #         return Response(data, status = status.HTTP_401_UNAUTHORIZED)
             
-            #generate random code
-            authOTP= createCode()
-            print(authOTP)
-            #if instance is already there just update otp
-            checkPhoneNumber = VerificationDetails.objects.filter(phone_number= phoneNumber)
-            if checkPhoneNumber:
-                currentTime = timezone.now()
-                checkPhoneNumber.update(otp = authOTP, dateCreated= currentTime)
-                phoneNumber = '+'+ phoneNumber
-                message = 'Your verification code is '+ authOTP
-                # sendSMS(phoneNumber,message)
-                data = {
-                    'status': 'success',
-                    'detail': 'OTP sent'
-                }
-                return Response(data, status = status.HTTP_200_OK)
+        #     #generate random code
+        #     authOTP= createCode()
+        #     print(authOTP)
+        #     #if instance is already there just update otp
+        #     checkPhoneNumber = VerificationDetails.objects.filter(phone_number= phoneNumber)
+        #     if checkPhoneNumber:
+        #         currentTime = timezone.now()
+        #         checkPhoneNumber.update(auth_otp = authOTP, date_created= currentTime)
+        #         phoneNumber = '+'+ phoneNumber
+        #         message = 'Your verification code is '+ authOTP
+        #         # sendSMS(phoneNumber,message)
+        #         data = {
+        #             'status': 'success',
+        #             'detail': 'OTP sent'
+        #         }
+        #         return Response(data, status = status.HTTP_200_OK)
             
-            #register otp in database
-            registerOTP = VerificationDetails(phone_number = phoneNumber, otp = authOTP)
-            registerOTP.save()
-            #send sms
-            phoneNumber = '+'+ phoneNumber
-            message = 'Your verification code is '+ authOTP
-            sendSMS(phoneNumber, message)
+        #     #register otp in database
+        #     registerOTP = VerificationDetails(phone_number = phoneNumber, otp = authOTP)
+        #     registerOTP.save()
+        #     #send sms
+        #     phoneNumber = '+'+ phoneNumber
+        #     message = 'Your verification code is '+ authOTP
+        #     sendSMS(phoneNumber, message)
 
     
-            data = {
-                'status': 'success',
-                'detail': 'OTP sent'
-                }
-            return JsonResponse(data, status = status.HTTP_200_OK)
+        #     data = {
+        #         'status': 'success',
+        #         'detail': 'OTP sent'
+        #         }
+        #     return Response(data, status = status.HTTP_200_OK)
         
 
         email = request.data.get("email")

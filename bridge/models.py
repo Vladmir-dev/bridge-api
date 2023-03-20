@@ -124,6 +124,8 @@ class CustomUserManager(BaseUserManager):
         user = self.model(username=username, email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
+        wallet = Wallet(user=user)
+        wallet.save()
         return user
 
 
