@@ -335,11 +335,31 @@ class AuthViewSet(GenericViewSet):
         user = User.objects.get(token=user_token)
 
         # check wether token matches
-
+        
         # if user.token == serializer.data['token']:
-        queryset = User.objects.filter(token=user_token).values()
-            # user_serializer = UserSerializer(user)
-        return Response(list(queryset), status=status.HTTP_200_OK)
+        # queryset = User.objects.filter(token=user_token).values()
+        # queryset = User.objects.get(token=user_token)
+        # print(dict(queryset))
+        # user_serializer = UserSerializer(user)
+        # print(user_serializer.data)
+        data = {
+            "id": user.id,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "phone_number": user.phone_number,
+            "sex": user.sex,
+            "city": user.city,
+            "verified": user.verified,
+            # "country": user.country,
+            # "nationality": user.nationality,
+            "date_of_birth": user.date_of_birth,
+            'accepted_terms': user.accepted_terms,
+            'date_joined': user.date_joined, 
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
 
     
 
