@@ -174,67 +174,78 @@ class AuthViewSet(GenericViewSet):
     def create_profile(self, request, id, *args, **kwargs):
         permission_classes = [IsAuthenticated,]
         serializer = ProfileRegister(data=request.data)
-        serializer.is_valid(raise_exception=True)
 
-        # check user
-        try:
-            user = User.objects.filter(id=id)
-        except:
-            raise ValidationError("User does not exist")
+        if serializer.is_valid():
 
-        user = User.objects.get(id=id)
+            # check user
+            try:
+                user = User.objects.filter(id=id)
+            except:
+                raise ValidationError("User does not exist")
 
-        # check if username already exists
-        username = serializer.data['username']
-        print("username ==>", username)
-        if username != None:
-            CheckUsername = User.objects.filter(username=username)
-            if CheckUsername:
-                raise ValidationError("Username already exists")
+            user = User.objects.get(id=id)
 
-        sex = serializer.data['sex']
-        city = serializer.data['city']
-        date_of_birth = serializer.data['date_of_birth']
+            # check if username already exists
+            username = serializer.validated_data.get('username')
+            print("username ==>", username)
+            if username != None:
+                CheckUsername = User.objects.filter(username=username)
+                if CheckUsername:
+                    raise ValidationError("Username already exists")
 
-        # user.phone_number = phone_number
-        user.username = username
-        user.sex = sex
-        user.city = city
-        user.date_of_birth = date_of_birth
-        user.save()
+            sex = serializer.validated_data.get('sex')
 
-        wallet = Wallet.objects.get(user=user)
+            city = serializer.validated_data.get('city')
+            date_of_birth = serializer.validated_data.get('date_of_birth')
+
+            # user.phone_number = phone_number
+            if username != None:
+                user.username = username
+
+            if sex != None:
+                user.sex = sex
+
+            if city != None:
+              user.city = city
+
+            if date_of_birth != None:
+                user.date_of_birth = date_of_birth
+
+            user.save()
+
+            wallet = Wallet.objects.get(user=user)
         
 
-        query_set = UserSerializer(user)
-        print(query_set)
+            query_set = UserSerializer(user)
+            print(query_set)
 
-        data = {
-            "id": user.id,
-            "username": user.username,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email": user.email,
-            "phone_number": user.phone_number,
-            "sex": user.sex,
-            "city": user.city,
-            "verified": user.verified,
-            # "country": user.country,
-            # "nationality": user.nationality,
-            "date_of_birth": user.date_of_birth,
-            'accepted_terms': user.accepted_terms,
-            'date_joined': user.date_joined,
-            "wallet": {
-                "wallet_no": wallet.wallet_no,
-                "amount": wallet.amount,
-                "total_received": wallet.total_received,
-                "total_sent": wallet.total_sent
+            data = {
+                "id": user.id,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "phone_number": user.phone_number,
+                "sex": user.sex,
+                "city": user.city,
+                "verified": user.verified,
+                # "country": user.country,
+                # "nationality": user.nationality,
+                "date_of_birth": user.date_of_birth,
+                'accepted_terms': user.accepted_terms,
+                'date_joined': user.date_joined,
+                "wallet": {
+                    "wallet_no": wallet.wallet_no,
+                    "amount": wallet.amount,
+                    "total_received": wallet.total_received,
+                    "total_sent": wallet.total_sent
+                }
             }
-        }
 
-        return Response(data, status=status.HTTP_201_CREATED)
-
-
+            return Response(data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors)
+         
 
     @action(detail=False, methods=['POST'])
     def login(self, request, **kwargs):

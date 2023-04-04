@@ -152,14 +152,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         RegexValidator(re.compile("\d{3}[-\.\s]??\d{3}[-\.\s]??\d{3}[-\.\s]??\d{3}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{3}[-\.\s]??\d{3}|\d{3}[-\.\s]??\d{3}[-\.\s]??\d{3}"), _(
             'Only numbers are allowed in format 000-000-000-000'), 'invalid')
     ], blank=True, null=True, unique=True)
-    sex = models.CharField(max_length=30, blank=True, default="", choices=(
+    sex = models.CharField(max_length=30, blank=True,null=True, default="", choices=(
         ('Male', 'Male'), ('Female', 'Female'), ('Other', 'other')))
     date_joined = models.DateTimeField(default=timezone.now)
     accepted_terms = models.BooleanField(default=False)
     date_of_birth = models.DateField(blank=True, null=True)
     country = CountryField(blank=True)
     nationality = CountryField(blank=True)
-    city = models.CharField(max_length=200, blank=True)
+    city = models.CharField(max_length=200, blank=True, null=True)
     token = models.CharField(max_length=550, null=True, blank=True, unique=True)
     photo = models.ImageField(
         upload_to=get_user_photo_file_path, null=True, blank=True)
@@ -178,7 +178,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     def __str__(self):
-        return self.username
+        return f"{self.username}"
 
     # @property
     # def token(self):
@@ -278,6 +278,12 @@ class Wallet(models.Model):
 
     def __str__(self):
         return self.wallet_no
+
+
+class Expense(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField()
 
 
 class Comment(models.Model):
