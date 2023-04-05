@@ -65,3 +65,8 @@ class ChatSerializer(serializers.ModelSerializer):
 class SendMoneySerializer(serializers.Serializer):
     receiver = serializers.CharField(required=True)
     amount = serializers.FloatField(required=True)
+
+
+class changePinSerializer(serializers.Serializer):
+    current_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)

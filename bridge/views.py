@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer, ChatSerializer,SendMoneySerializer
+from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer, ChatSerializer,SendMoneySerializer,changePinSerializer
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import exceptions as exc
 from rest_framework.decorators import action
@@ -526,37 +526,42 @@ class AuthViewSet(GenericViewSet):
 
     #     return Response(status=status.HTTP_201_CREATED)
 
+    @action(detail=False, methods=["POST"], url_path="change_password/(?P<id>[0-9A-Za-z_\-]+)")
+    def change_password(self, request,id, **kwargs):
+        permission_classes = [IsAuthenticated, ]
+        serializer = changePinSerializer(data= request.data)
+        if serializer.is_valid(raise_exception=True):
+            current_password = serializer.validated_data['current_password']
+            new_password = serializer.validated_data['new_password']
+            #check new pin if its a pin
+            # if not new_password.isdecimal() or len(new_password) != 5:
+                # raise exc.BadRequest(_('New pin must be made up of five digits'))
 
-    # @action(detail=False, methods=['POST'], url_path="get_posts/(?P<id>[0-9A-Za-z_\-]+)")
-    # def get_post(self, request, id):
-    #     # serializer
-    #     serializer = TokenSerializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
+            try:
+                getUser = User.objects.get(id= id)
+            except:
+                data = {
+                    'status': 'failed',
+                    'detail': 'User with that id does not exist'
+                }
+                return Response(data, status = status.HTTP_401_UNAUTHORIZED)
 
-    #     # get user
+            if not getUser.check_password(current_password):
+                data = {
+                    'status': 'failed',
+                    'detail': 'current password is incorrect'
+                }
+                return Response(data, status = status.HTTP_401_UNAUTHORIZED)
 
-    #     try:
-    #         user = User.objects.filter(id=id)
-    #     except:
-    #         raise ValidationError("User does not exist")
+            getUser.set_password(new_password)
+            getUser.save()
 
-    #     user = User.objects.get(id=id)
-
-    #     # check wether token matches
-
-    #     if user.token == serializer.data['token']:
-    #         user_posts = Posts.objects.get(user=user)
-    #         # print("==>",user_posts)
-    #         post_serializer = PostsSerializer(user_posts)
-    #         # print(post_serializer.data)
-    #         # user_serializer = UserSerializer(user)
-    #         return Response(post_serializer.data, status=status.HTTP_200_OK)
-
-    #     else:
-    #         data = {
-    #             "data": "failed credentials"
-    #         }
-    #         return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+            data = {
+                'status': 'successful',
+                'detail': 'Pin was changed successfully'
+            }
+            return Response(data, status = status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
     @action(detail=False,methods=["POST"], url_path="send_otp")
