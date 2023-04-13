@@ -166,7 +166,7 @@ class AuthViewSet(GenericViewSet):
             }
         }
 
-        return Response(data, status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_201_CREATED)
     
     
 
@@ -197,7 +197,7 @@ class AuthViewSet(GenericViewSet):
 
             city = serializer.validated_data.get('city')
             date_of_birth = serializer.validated_data.get('date_of_birth')
-
+            photo = serializer.validated_data.get('photo')
             # user.phone_number = phone_number
             if username != None:
                 user.username = username
@@ -210,6 +210,9 @@ class AuthViewSet(GenericViewSet):
 
             if date_of_birth != None:
                 user.date_of_birth = date_of_birth
+
+            if photo != None:
+                user.photo = photo
 
             user.save()
 
@@ -242,7 +245,7 @@ class AuthViewSet(GenericViewSet):
                 }
             }
 
-            return Response(data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors)
          
@@ -344,9 +347,14 @@ class AuthViewSet(GenericViewSet):
             raise ValidationError("User does not exist")
 
         user = User.objects.get(token=user_token)
-
-        # check wether token matches
         
+        if user.photo is None or user.photo == "":
+            photo = " "
+        else:
+            photo = user.photo
+        # check wether token matches
+        photo = str(photo)
+        print("photo ===> ", photo)        
         # if user.token == serializer.data['token']:
         # queryset = User.objects.filter(token=user_token).values()
         # queryset = User.objects.get(token=user_token)
@@ -363,6 +371,7 @@ class AuthViewSet(GenericViewSet):
             "sex": user.sex,
             "city": user.city,
             "verified": user.verified,
+            "photo":photo,
             # "country": user.country,
             # "nationality": user.nationality,
             "date_of_birth": user.date_of_birth,
