@@ -16,12 +16,26 @@ from django.conf import settings
 import jwt
 from datetime import datetime, timedelta
 from django.core.validators import FileExtensionValidator
+import random
 # from django.db.models.signals import post_save
 # Create your models here.
 
-
 def get_wallet_account_number():
-    return rstr.xeger(r'[A-Z]\d\d[A-Z][A-Z]\d')
+    #get the Prefix
+    prefix = "BRI"
+
+    #follow the three letters with a four digit number
+    number = str(random.randint(10000, 99999))
+
+    #calculate checksum
+    checksum = str(sum(int(float(digit)) for digit in number) % 10)
+
+    #Append the checksum to the end of the account number
+    account_number = prefix + number + checksum
+    print("account_number ==>", account_number)
+
+    return account_number
+
 
 
 def get_user_photo_file_path(instance, filename):
@@ -270,8 +284,8 @@ class RelationShip(models.Model):
 class Wallet(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     amount = models.FloatField(default=0)
-    wallet_no = models.CharField(_('Account Number'), max_length=10, unique=True, default=get_wallet_account_number, validators=[
-                                 RegexValidator(re.compile(r'[A-Z]\d\d[A-Z][A-Z]\d'))])
+    wallet_no = models.CharField(_('Account Number'), max_length=10, unique=True, default=get_wallet_account_number)
+    hash_value = models.CharField(max_length=2000),
     total_sent = models.FloatField(default=0)
     total_received = models.FloatField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

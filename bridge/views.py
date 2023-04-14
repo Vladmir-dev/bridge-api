@@ -17,6 +17,7 @@ import json
 from bridge.base.methods import createCode, timedifference, sendEmail, generate_username
 from django.utils import timezone
 from .permissions import CustomAuthentication
+import hashlib
 
 # Create your views here.
 
@@ -105,6 +106,12 @@ class AuthViewSet(GenericViewSet):
         # wallet.save()
 
         wallet = Wallet.objects.get(user=user)
+        hash_ = hashlib.sha256(wallet.wallet_no.encode()).hexdigest()
+        print("This is the hash ===>",hash_)
+        wallet.hash_value = hash_
+        wallet.save()
+
+
         message = f"Your wallet number is {wallet.wallet_no} welcome to bridge"
         notific = Notifications(user=user, message=message)
         notific.save()
