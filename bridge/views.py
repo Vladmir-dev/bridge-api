@@ -160,6 +160,8 @@ class AuthViewSet(GenericViewSet):
             "sex": user.sex,
             "city": user.city,
             "verified": user.verified,
+            "occupation":user.occupation,
+            "interests":user.interests,
             # "country":country,
             # "nationality": user.nationality,
             "date_of_birth": user.date_of_birth,
@@ -206,6 +208,7 @@ class AuthViewSet(GenericViewSet):
             city = serializer.validated_data.get('city')
             date_of_birth = serializer.validated_data.get('date_of_birth')
             photo = serializer.validated_data.get('photo')
+            print("photo ==>", photo)
             occupation = serializer.validated_data.get('occupation')
             interests = serializer.validated_data.get('interests')
             # user.phone_number = phone_number
@@ -233,7 +236,11 @@ class AuthViewSet(GenericViewSet):
             user.save()
 
             wallet = Wallet.objects.get(user=user)
-        
+            
+            if user.photo is None:
+                photo_ = ""
+            else:
+                photo_ = user.photo
 
             query_set = UserSerializer(user)
             print(query_set)
@@ -248,6 +255,9 @@ class AuthViewSet(GenericViewSet):
                 "sex": user.sex,
                 "city": user.city,
                 "verified": user.verified,
+                "interests":user.interests,
+                "occupation":user.occupation,
+                "photo":photo_,
                 # "country": user.country,
                 # "nationality": user.nationality,
                 "date_of_birth": user.date_of_birth,
@@ -261,7 +271,7 @@ class AuthViewSet(GenericViewSet):
                 }
             }
 
-            return Response(status=status.HTTP_201_CREATED)
+            return Response(data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors)
          
