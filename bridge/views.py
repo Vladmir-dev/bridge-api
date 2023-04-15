@@ -167,13 +167,14 @@ class AuthViewSet(GenericViewSet):
             'date_joined': user.date_joined,
             "wallet": {
                 "wallet_no": wallet.wallet_no,
+                "hash_value":wallet.hash_value,
                 "amount": wallet.amount,
                 "total_received": wallet.total_received,
                 "total_sent": wallet.total_sent
             }
         }
 
-        return Response(status=status.HTTP_201_CREATED)
+        return Response(data,status=status.HTTP_201_CREATED)
     
     
 
@@ -205,6 +206,8 @@ class AuthViewSet(GenericViewSet):
             city = serializer.validated_data.get('city')
             date_of_birth = serializer.validated_data.get('date_of_birth')
             photo = serializer.validated_data.get('photo')
+            occupation = serializer.validated_data.get('occupation')
+            interests = serializer.validated_data.get('interests')
             # user.phone_number = phone_number
             if username != None:
                 user.username = username
@@ -220,6 +223,12 @@ class AuthViewSet(GenericViewSet):
 
             if photo != None:
                 user.photo = photo
+            
+            if occupation != None:
+                user.occupation = occupation
+            
+            if interests != None:
+                user.interests = interests
 
             user.save()
 

@@ -17,6 +17,7 @@ import jwt
 from datetime import datetime, timedelta
 from django.core.validators import FileExtensionValidator
 import random
+from django_mysql.models import ListCharField
 # from django.db.models.signals import post_save
 # Create your models here.
 
@@ -179,6 +180,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         upload_to=get_user_photo_file_path, null=True, blank=True)
     background_photo = models.ImageField(
         upload_to=get_user_photo_file_path, null=True, blank=True)
+    occupation = models.CharField(max_length=250, null=True, blank=True)
+    interests = ListCharField(base_field=models.CharField(max_length=20), size=200, max_length=(200 * 21), blank=True, null=True)
     anonymous = models.BooleanField(default=False)
     verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
