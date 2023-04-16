@@ -21,6 +21,8 @@ from django_mysql.models import ListCharField
 # from django.db.models.signals import post_save
 # Create your models here.
 
+default = "/media/user/photo/default/default.jpeg"
+
 def get_wallet_account_number():
     #get the Prefix
     prefix = "BRI"
@@ -172,8 +174,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(default=timezone.now)
     accepted_terms = models.BooleanField(default=False)
     date_of_birth = models.DateField(blank=True, null=True)
-    country = CountryField(blank=True)
-    nationality = CountryField(blank=True)
+    country = models.CharField(max_length=100, blank=True, null=True)
+    nationality = models.CharField(max_length=100, blank=True, null=True)
     city = models.CharField(max_length=200, blank=True, null=True)
     token = models.CharField(max_length=550, null=True, blank=True, unique=True)
     photo = models.ImageField(

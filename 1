@@ -208,18 +208,16 @@ class AuthViewSet(GenericViewSet):
             sex = serializer.validated_data.get('sex')
 
             city = serializer.validated_data.get('city')
-            country = serializer.validated_data.get('country')
-            nationality = serializer.validated_data.get('nationality')
             date_of_birth = serializer.validated_data.get('date_of_birth')
-            # photo = serializer.validated_data.get('photo')  
+            photo = serializer.validated_data.get('photo')  
             occupation = serializer.validated_data.get('occupation')
             interests = serializer.validated_data.get('interests')
             # user.phone_number = phone_number
-            # if photo is None:
-                # path = '/default/default.jpeg'
-                # photo = path
-            # else:
-                # photo = photo
+            if photo is None:
+                path = '/default/default.jpeg'
+                photo = path
+            else:
+                photo = photo
 
             if username != None:
                 user.username = username
@@ -232,15 +230,9 @@ class AuthViewSet(GenericViewSet):
 
             if date_of_birth != None:
                 user.date_of_birth = date_of_birth
-            
-            if country != None:
-                user.country = country
 
-            if nationality != None:
-                user.nationality = nationality
-
-            # if photo != None:
-                # user.photo = photo
+            if photo != None:
+                user.photo = photo
             
             if occupation != None:
                 user.occupation = occupation
@@ -269,9 +261,9 @@ class AuthViewSet(GenericViewSet):
                 "verified": user.verified,
                 "interests":user.interests,
                 "occupation":user.occupation,
-                # "photo":photo_,
-                "country": user.country,
-                "nationality": user.nationality,
+                "photo":photo_,
+                # "country": user.country,
+                # "nationality": user.nationality,
                 "date_of_birth": user.date_of_birth,
                 'accepted_terms': user.accepted_terms,
                 'date_joined': user.date_joined,

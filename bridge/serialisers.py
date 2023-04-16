@@ -20,7 +20,7 @@ class BaseRegister(CountryFieldMixin, serializers.ModelSerializer):
 
 
 class ProfileRegister(CountryFieldMixin, serializers.ModelSerializer):
-    interests = serializers.ListField(child=serializers.CharField())
+    interests = serializers.ListField(child=serializers.CharField(), required=False)
     class Meta:
         model = User
         fields = ['username',  'sex', 'date_of_birth',
@@ -34,7 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'phone_number', 'email', 'sex',
-                  'accepted_terms', 'date_of_birth',  'nationality', 'city', 'password', 'verified',]
+                  'accepted_terms', 'date_of_birth', 'country', 'nationality', 'city', 'password', 'verified',]
         extra_kwargs = {'password': {'write_only': True, }}
 
 
