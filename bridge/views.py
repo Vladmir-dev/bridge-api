@@ -211,15 +211,15 @@ class AuthViewSet(GenericViewSet):
             country = serializer.validated_data.get('country')
             nationality = serializer.validated_data.get('nationality')
             date_of_birth = serializer.validated_data.get('date_of_birth')
-            # photo = serializer.validated_data.get('photo')  
+            photo = serializer.validated_data.get('photo')  
             occupation = serializer.validated_data.get('occupation')
             interests = serializer.validated_data.get('interests')
             # user.phone_number = phone_number
-            # if photo is None:
+            if photo is None or photo == '':
                 # path = '/default/default.jpeg'
-                # photo = path
-            # else:
-                # photo = photo
+                photo = ''
+            else:
+                photo = photo
 
             if username != None:
                 user.username = username
@@ -239,8 +239,8 @@ class AuthViewSet(GenericViewSet):
             if nationality != None:
                 user.nationality = nationality
 
-            # if photo != None:
-                # user.photo = photo
+            if photo != None:
+                user.photo = photo
             
             if occupation != None:
                 user.occupation = occupation
@@ -269,7 +269,7 @@ class AuthViewSet(GenericViewSet):
                 "verified": user.verified,
                 "interests":user.interests,
                 "occupation":user.occupation,
-                # "photo":photo_,
+                "photo":photo,
                 "country": user.country,
                 "nationality": user.nationality,
                 "date_of_birth": user.date_of_birth,
