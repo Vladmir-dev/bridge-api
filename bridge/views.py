@@ -254,8 +254,8 @@ class AuthViewSet(GenericViewSet):
             
             
 
-            query_set = UserSerializer(user)
-            print(query_set)
+            # query_set = UserSerializer(user)
+            # print(query_set)
 
             data = {
                 "id": user.id,

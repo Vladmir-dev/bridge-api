@@ -21,14 +21,14 @@ from django_mysql.models import ListCharField
 # from django.db.models.signals import post_save
 # Create your models here.
 
-default = "/media/user/photo/default/default.jpeg"
+# default = "/media/user/photo/default/default.jpeg"
 
 def get_wallet_account_number():
     #get the Prefix
     prefix = "BRI"
 
     #follow the three letters with a four digit number
-    number = str(random.randint(10000, 99999))
+    number = str(random.randint(1000, 9999))
 
     #calculate checksum
     checksum = str(sum(int(float(digit)) for digit in number) % 10)
@@ -183,7 +183,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     background_photo = models.ImageField(
         upload_to=get_user_photo_file_path, null=True, blank=True)
     occupation = models.CharField(max_length=250, null=True, blank=True)
-    interests = ListCharField(base_field=models.CharField(max_length=20), size=200, max_length=(200 * 21), blank=True, null=True)
+    interests = ListCharField(base_field=models.CharField(max_length=100), size=1000, max_length=(1000 * 101), blank=True, null=True)
     anonymous = models.BooleanField(default=False)
     verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
