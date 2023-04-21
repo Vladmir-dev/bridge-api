@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework import status
 import re
 from rest_framework.exceptions import ValidationError
-from .models import User, VerificationDetails, Posts, Wallet, ChatMessage, Notifications
+from .models import User, VerificationDetails, Posts, Wallet, ChatMessage, Notifications, ChatMessage, Likes, Comment, Reply
 from .services import emailValidator, sexValidator, get_token_for_account
 from rest_framework.serializers import Serializer
 from django.forms.models import model_to_dict
@@ -392,7 +392,14 @@ class AuthViewSet(GenericViewSet):
             photo = user.photo
         # check wether token matches
         photo = str(photo)
-        print("photo ===> ", photo)        
+        print("photo ===> ", photo)
+
+        total_posts = Posts.objects.filter(user=user).count()
+        total_comments = Comment.objects.filter(user=user).count()
+        total_likes = Likes.objects.filter(user=user).count()
+        total_replies = Reply.objects.filter(user=user).count()
+        posts_and_replies = total_posts + total_replies
+        # print("total posts ===>",user_posts)        
         # if user.token == serializer.data['token']:
         # queryset = User.objects.filter(token=user_token).values()
         # queryset = User.objects.get(token=user_token)
@@ -414,7 +421,12 @@ class AuthViewSet(GenericViewSet):
             # "nationality": user.nationality,
             "date_of_birth": user.date_of_birth,
             'accepted_terms': user.accepted_terms,
-            'date_joined': user.date_joined, 
+            'date_joined': user.date_joined,
+            'total_posts': total_posts,
+            'total_comments':total_comments,
+            'total_likes':total_likes,
+            'total_replies':total_replies,
+            'posts_and_replies':posts_and_replies
         }
 
         return Response(data, status=status.HTTP_200_OK)

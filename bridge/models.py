@@ -278,6 +278,24 @@ class Posts(models.Model):
         if self.photo:
             compress_img(self.photo)
 
+class Reply(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Posts, on_delete=models.CASCADE)
+    message = models.TextField()
+    photo = models.ImageField(upload_to=get_user_photo_file_path, null=True, blank=True)
+    video = models.FileField(upload_to='videos', null=True, validators=[FileExtensionValidator(allowed_extensions=['MOV','avi', 'mp4', 'webm', 'mkv'])])
+    document = models.FileField(upload_to='documents', null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return "{0} : {1}".format(self.user, self.message)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.photo:
+            compress_img(self.photo)
+
 
 class RelationShip(models.Model):
     follower = models.ForeignKey(
