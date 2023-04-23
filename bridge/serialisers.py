@@ -24,7 +24,7 @@ class ProfileRegister(CountryFieldMixin, serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username',  'sex', 'date_of_birth',
-                  'country', 'nationality', 'city', 'photo', 'occupation', 'interests']
+                  'country', 'nationality', 'city', 'photo', 'occupation', 'interests', 'bio']
         # extra_kwargs = {'password': {'write_only': True,}}
 
 

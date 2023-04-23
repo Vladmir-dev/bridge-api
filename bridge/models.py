@@ -171,6 +171,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     ], blank=True, null=True, unique=True)
     sex = models.CharField(max_length=30, blank=True,null=True, default="", choices=(
         ('Male', 'Male'), ('Female', 'Female'), ('Other', 'other')))
+    bio = models.TextField(null=True, blank=True)
     date_joined = models.DateTimeField(default=timezone.now)
     accepted_terms = models.BooleanField(default=False)
     date_of_birth = models.DateField(blank=True, null=True)
