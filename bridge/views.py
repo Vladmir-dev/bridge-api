@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework import status
 import re
 from rest_framework.exceptions import ValidationError
-from .models import User, VerificationDetails, Posts, Wallet, ChatMessage, Notifications, ChatMessage, Likes, Comment, Reply,RelationShip
+from .models import User, VerificationDetails, Posts, Wallet, ChatMessage, Notifications, ChatMessage, Likes, Comment, Reply,RelationShip, Bridges
 from .services import emailValidator, sexValidator, get_token_for_account
 from rest_framework.serializers import Serializer
 from django.forms.models import model_to_dict
@@ -410,6 +410,9 @@ class AuthViewSet(GenericViewSet):
         #follows
         follows = RelationShip.objects.filter(follower=user).count()
 
+        #bridges
+        bridges = Bridges.objects.filter(user=user).count()
+
         # print("total posts ===>",user_posts)        
         # if user.token == serializer.data['token']:
         # queryset = User.objects.filter(token=user_token).values()
@@ -441,7 +444,8 @@ class AuthViewSet(GenericViewSet):
             'total_replies':total_replies,
             'posts_and_replies':posts_and_replies,
             'followers':followers,
-            'follows':follows
+            'follows':follows,
+            'bridges':bridges
 
         }
 

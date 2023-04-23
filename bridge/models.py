@@ -303,6 +303,13 @@ class RelationShip(models.Model):
         User, on_delete=models.CASCADE, related_name="follower")
     followed = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="followed")
+    
+
+class Bridges(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="bridger1")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="bridger2")
 
 
 class Wallet(models.Model):
