@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework import status
 import re
 from rest_framework.exceptions import ValidationError
-from .models import User, VerificationDetails, Posts, Wallet, ChatMessage, Notifications, ChatMessage, Likes, Comment, Reply
+from .models import User, VerificationDetails, Posts, Wallet, ChatMessage, Notifications, ChatMessage, Likes, Comment, Reply,RelationShip
 from .services import emailValidator, sexValidator, get_token_for_account
 from rest_framework.serializers import Serializer
 from django.forms.models import model_to_dict
@@ -399,6 +399,12 @@ class AuthViewSet(GenericViewSet):
         total_likes = Likes.objects.filter(user=user).count()
         total_replies = Reply.objects.filter(user=user).count()
         posts_and_replies = total_posts + total_replies
+
+        #folowers
+        followers = RelationShip.objects.filter(followed=user).count()
+        #follows
+        follows = RelationShip.objects.filter(follower=user).count()
+
         # print("total posts ===>",user_posts)        
         # if user.token == serializer.data['token']:
         # queryset = User.objects.filter(token=user_token).values()
@@ -417,8 +423,9 @@ class AuthViewSet(GenericViewSet):
             "city": user.city,
             "verified": user.verified,
             "photo":photo,
-            # "country": user.country,
-            # "nationality": user.nationality,
+            "country": user.country,
+            "interests":user.interests,
+            "nationality": user.nationality,
             "date_of_birth": user.date_of_birth,
             'accepted_terms': user.accepted_terms,
             'date_joined': user.date_joined,
@@ -426,7 +433,10 @@ class AuthViewSet(GenericViewSet):
             'total_comments':total_comments,
             'total_likes':total_likes,
             'total_replies':total_replies,
-            'posts_and_replies':posts_and_replies
+            'posts_and_replies':posts_and_replies,
+            'followers':followers,
+            'follows':follows
+
         }
 
         return Response(data, status=status.HTTP_200_OK)
