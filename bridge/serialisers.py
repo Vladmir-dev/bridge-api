@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Posts, ChatMessage
+from .models import User, Posts, ChatMessage,Comment
 from django_countries.serializers import CountryFieldMixin
 from rest_framework.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -63,6 +63,12 @@ class ChatSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = "__all__"
+
+
 class SendMoneySerializer(serializers.Serializer):
     receiver = serializers.CharField(required=True)
     amount = serializers.FloatField(required=True)
@@ -71,3 +77,7 @@ class SendMoneySerializer(serializers.Serializer):
 class changePinSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+class WalletPasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(required=True)
+    # new_password = serializers.CharField(required=True)

@@ -319,6 +319,7 @@ class Wallet(models.Model):
     hash_value = models.CharField(max_length=2000),
     total_sent = models.FloatField(default=0)
     total_received = models.FloatField(default=0)
+    password = models.CharField(max_length=500, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer, ChatSerializer,SendMoneySerializer,changePinSerializer
+from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer, ChatSerializer,SendMoneySerializer,changePinSerializer,CommentSerializer,WalletPasswordSerializer
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import exceptions as exc
 from rest_framework.decorators import action
@@ -510,7 +510,23 @@ class AuthViewSet(GenericViewSet):
         notifications = Notifications.objects.filter(user=user).values()
         return Response(notifications, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['POST'], url_path="wallet_password/(?P<id>[0-9A-Za-z_\-]+)")
+    def create_password(self, request, id,**kwargs):
+        permission_classes = [IsAuthenticated]
+        serializer = WalletPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
+        try:
+            user = User.objects.get(id=id)
+        except:
+            raise ValidationError("User does not exist")
+        
+        wallet = Wallet.objects.get(user=user)
+        wallet.password = serializer.data['password']
+        wallet.save(update_fields=['password'])
+
+        return Response(satus=status.HTTP_201_CREATED)
+    
 
     @action(detail=False, methods=["POST"], url_path="send_money/(?P<id>[0-9A-Za-z_\-]+)")
     def send_money(self, request, id, **kwargs):
@@ -894,6 +910,52 @@ class AuthViewSet(GenericViewSet):
         return Response(data, status=status.HTTP_401_UNAUTHORIZED)
 
 
+    @action(detail=False, methods=['POST'], url_path="like-post/(?P<id>[0-9A-Za-z_\-]+)")
+    def like_post(self, request, id, **kwargs):
+        permission_classes = [IsAuthenticated,]
+        user_token = request.META.get('HTTP_AUTHORIZATION', '')
+        user_token = user_token.replace('Bearer ', '')
+        
+        try:
+            user = User.objects.get(token=user_token)
+        except:
+            raise ValidationError("User does does not exist")
+
+        try:
+            post = Posts.objects.get(id=id)
+        except:
+            raise ValidationError("Post with this id does not exist")
+        
+        like = Likes(user=user, post=post)
+        like.save()
+
+        return Response(status=status.HTTP_201_CREATED)
+    
+    
+    @action(detail=False, methods=['POST'], url_path="post-likes/(?P<id>[0-9A-Za-z_\-]+)")
+    def post_likes(self, request, id, **kwargs):
+        permission_classes = [IsAuthenticated,]
+        user_token = request.META.get('HTTP_AUTHORIZATION', '')
+        user_token = user_token.replace('Bearer ', '')
+        
+        try:
+            user = User.objects.get(token=user_token)
+        except:
+            raise ValidationError("User does does not exist")
+
+        try:
+            post = Posts.objects.get(id=id)
+        except:
+            raise ValidationError("Post with this id does not exist")
+        
+        likes = Likes.objects.filter(post=post).count()
+
+        no_likes = {
+            "likes":likes
+        }
+       
+        return Response(no_likes, status=status.HTTP_200_OK)
+
 
 class PostCreateView(generics.ListCreateAPIView):
     queryset = Posts.objects.all()
@@ -907,7 +969,8 @@ class PostCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         return Posts.objects.filter(user=user)
-
+    
+    
 
 class ChatCreateView(generics.ListCreateAPIView):
     queryset = ChatMessage.objects.all()
@@ -921,3 +984,17 @@ class ChatCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         return ChatMessage.objects.filter(user=user)
+    
+
+class CommentCreateView(generics.ListCreateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    authentication_classes = [CustomAuthentication,]
+    permission_classes = [IsAuthenticated,]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        post = self.request.post
+        return Comment.objects.filter(post=post)
