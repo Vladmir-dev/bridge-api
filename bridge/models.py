@@ -370,6 +370,32 @@ class Drops(models.Model):
         super().save(*args, **kwargs)
         compress_img(self.photo)
 
+
+class DropLikes(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    drop = models.ForeignKey(Drops, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Drop {self.drop.id} liked by {self.user.username}"
+
+
+
+class DropComment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    drop = models.ForeignKey(Drops, on_delete=models.CASCADE)
+    comment = models.TextField()
+    photo = models.ImageField(upload_to=get_user_photo_file_path, null=True, blank=True)
+    video = models.FileField(upload_to='videos', null=True, validators=[FileExtensionValidator(allowed_extensions=['MOV','avi', 'mp4', 'webm', 'mkv'])])
+    document = models.FileField(upload_to='documents', null=True)
+
+    def __str__(self):
+        return f"Comment {self.id} by {self.user.username}"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        compress_img(self.photo)
+
+
 class VerificationDetails(models.Model):
     email = models.EmailField()
     phone_number = models.CharField(max_length=50)
