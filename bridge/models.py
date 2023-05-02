@@ -355,6 +355,20 @@ class Likes(models.Model):
     def __str__(self):
         return self.post
 
+class Drops(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="creater")
+    receipients = models.ManyToManyField(User, related_name='received_posts', blank=True)
+    message = models.CharField(max_length=1000)
+    photo = models.ImageField(upload_to=get_user_photo_file_path, null=True, blank=True)
+    video = models.FileField(upload_to='videos', null=True, validators=[FileExtensionValidator(allowed_extensions=['MOV','avi', 'mp4', 'webm', 'mkv'])])
+    document = models.FileField(upload_to='documents', null=True)
+
+    def __str__(self):
+        return f"Post {self.id} by {self.sender.username}"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        compress_img(self.photo)
 
 class VerificationDetails(models.Model):
     email = models.EmailField()
