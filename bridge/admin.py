@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.models import Group
-from .models import User, Wallet, Posts, VerificationDetails, Likes, Comment,Notifications
+from .models import User, Wallet, Posts, VerificationDetails, Likes, Comment,Notifications, Drops, DropLikes, DropComment
 
 # class ProfileInline(admin.StackedInline):
 #     model = Profile
@@ -20,3 +20,6 @@ admin.site.register(VerificationDetails)
 admin.site.register(Likes)
 admin.site.register(Comment)
 admin.site.register(Notifications)
+admin.site.register(Drops)
+admin.site.register(DropLikes)
+admin.site.register(DropComment)

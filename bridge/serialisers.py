@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Posts, ChatMessage,Comment
+from .models import User, Posts, ChatMessage,Comment,Drops, DropLikes, DropComment
 from django_countries.serializers import CountryFieldMixin
 from rest_framework.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -81,3 +81,10 @@ class changePinSerializer(serializers.Serializer):
 class WalletPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     # new_password = serializers.CharField(required=True)
+
+class DropsSerializer(serializers.ModelSerializer):
+    receipients = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.filter(is_staff=False))
+    
+    class Meta:
+        model = Drops
+        fields = ['sender', 'receipients', 'message', 'photo', 'video', 'document', ]

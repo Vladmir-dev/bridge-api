@@ -1,13 +1,14 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer, ChatSerializer,SendMoneySerializer,changePinSerializer,CommentSerializer,WalletPasswordSerializer
+from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer, ChatSerializer,SendMoneySerializer,changePinSerializer,CommentSerializer,WalletPasswordSerializer,DropsSerializer
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import exceptions as exc
 from rest_framework.decorators import action
 from rest_framework import status
+from rest_framework import viewsets
 import re
 from rest_framework.exceptions import ValidationError
-from .models import User, VerificationDetails, Posts, Wallet, ChatMessage, Notifications, ChatMessage, Likes, Comment, Reply,RelationShip, Bridges
+from .models import User, VerificationDetails, Posts, Wallet, ChatMessage, Notifications, ChatMessage, Likes, Comment, Reply,RelationShip, Bridges,Drops, DropLikes, DropComment
 from .services import emailValidator, sexValidator, get_token_for_account
 from rest_framework.serializers import Serializer
 from django.forms.models import model_to_dict
@@ -998,3 +999,16 @@ class CommentCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         post = self.request.post
         return Comment.objects.filter(post=post)
+
+
+
+class ModelViewSet(viewsets.ModelViewSet):
+    queryset = Drops.objects.all()
+    serializer_class = DropsSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            drop = serializer.save()
+            return Response(self.get_serializer(drop).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

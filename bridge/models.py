@@ -310,6 +310,7 @@ class Bridges(models.Model):
         User, on_delete=models.CASCADE, related_name="bridger1")
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="bridger2")
+    date_created = models.DateTimeField(auto_now_add=True)
 
 
 class Wallet(models.Model):
@@ -339,6 +340,7 @@ class Comment(models.Model):
     photo = models.ImageField(upload_to=get_user_photo_file_path, null=True, blank=True)
     video = models.FileField(upload_to='videos', null=True, validators=[FileExtensionValidator(allowed_extensions=['MOV','avi', 'mp4', 'webm', 'mkv'])])
     document = models.FileField(upload_to='documents', null=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.comment
@@ -351,6 +353,7 @@ class Comment(models.Model):
 class Likes(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Posts, on_delete=models.CASCADE)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.post
@@ -360,20 +363,23 @@ class Drops(models.Model):
     receipients = models.ManyToManyField(User, related_name='received_posts', blank=True)
     message = models.CharField(max_length=1000)
     photo = models.ImageField(upload_to=get_user_photo_file_path, null=True, blank=True)
-    video = models.FileField(upload_to='videos', null=True, validators=[FileExtensionValidator(allowed_extensions=['MOV','avi', 'mp4', 'webm', 'mkv'])])
-    document = models.FileField(upload_to='documents', null=True)
+    video = models.FileField(upload_to='videos', null=True, blank=True, validators=[FileExtensionValidator(allowed_extensions=['MOV','avi', 'mp4', 'webm', 'mkv'])])
+    document = models.FileField(upload_to='documents', null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Post {self.id} by {self.sender.username}"
+        return f"Drop {self.id} by {self.sender.username}"
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        compress_img(self.photo)
+        if self.photo != None:
+            compress_img(self.photo)
 
 
 class DropLikes(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     drop = models.ForeignKey(Drops, on_delete=models.CASCADE)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Drop {self.drop.id} liked by {self.user.username}"
@@ -387,13 +393,16 @@ class DropComment(models.Model):
     photo = models.ImageField(upload_to=get_user_photo_file_path, null=True, blank=True)
     video = models.FileField(upload_to='videos', null=True, validators=[FileExtensionValidator(allowed_extensions=['MOV','avi', 'mp4', 'webm', 'mkv'])])
     document = models.FileField(upload_to='documents', null=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Comment {self.id} by {self.user.username}"
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        compress_img(self.photo)
+
+        if self.photo != None:
+            compress_img(self.photo)
 
 
 class VerificationDetails(models.Model):
