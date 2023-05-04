@@ -933,7 +933,37 @@ class AuthViewSet(GenericViewSet):
         return Response(status=status.HTTP_201_CREATED)
     
     
-    @action(detail=False, methods=['POST'], url_path="post-likes/(?P<id>[0-9A-Za-z_\-]+)")
+    @action(detail=False, methods=['POST'], url_path="like-drop-post/(?P<id>[0-9A-Za-z_\-]+)")
+    def like_drop_post(self, request, id, **kwargs):
+        permission_classes = [IsAuthenticated,]
+        user_token = request.META.get('HTTP_AUTHORIZATION', '')
+        user_token = user_token.replace('Bearer ', '')
+        
+        try:
+            user = User.objects.get(token=user_token)
+        except:
+            raise ValidationError("User does does not exist")
+
+        try:
+            drop = Drops.objects.get(id=id)
+        except:
+            raise ValidationError("Post with this id does not exist")
+        
+        #check whether he is a recipient
+        if user in drop.receipients.all():    
+            like = DropLikes(user=user, drop=drop)
+            like.save()
+        
+        else:
+            data = {
+                "data":"User is not a recipient"
+            }
+            return Response(data, status=status.HTTP_201_CREATED)
+
+        return Response(status=status.HTTP_201_CREATED)
+    
+    
+    @action(detail=False, methods=['GET'], url_path="post-likes/(?P<id>[0-9A-Za-z_\-]+)")
     def post_likes(self, request, id, **kwargs):
         permission_classes = [IsAuthenticated,]
         user_token = request.META.get('HTTP_AUTHORIZATION', '')
@@ -950,6 +980,31 @@ class AuthViewSet(GenericViewSet):
             raise ValidationError("Post with this id does not exist")
         
         likes = Likes.objects.filter(post=post).count()
+
+        no_likes = {
+            "likes":likes
+        }
+       
+        return Response(no_likes, status=status.HTTP_200_OK)
+    
+
+    @action(detail=False, methods=['GET'], url_path="drop-likes/(?P<id>[0-9A-Za-z_\-]+)")
+    def drop_likes(self, request, id, **kwargs):
+        permission_classes = [IsAuthenticated,]
+        user_token = request.META.get('HTTP_AUTHORIZATION', '')
+        user_token = user_token.replace('Bearer ', '')
+        
+        try:
+            user = User.objects.get(token=user_token)
+        except:
+            raise ValidationError("User does does not exist")
+
+        try:
+            drop = Drops.objects.get(id=id)
+        except:
+            raise ValidationError("Post with this id does not exist")
+        
+        likes = DropLikes.objects.filter(drop=drop).count()
 
         no_likes = {
             "likes":likes

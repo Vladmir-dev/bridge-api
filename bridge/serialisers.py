@@ -78,9 +78,11 @@ class changePinSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
 
+
 class WalletPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     # new_password = serializers.CharField(required=True)
+
 
 class DropsSerializer(serializers.ModelSerializer):
     receipients = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.filter(is_staff=False))
@@ -88,3 +90,9 @@ class DropsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Drops
         fields = ['sender', 'receipients', 'message', 'photo', 'video', 'document', ]
+
+
+class DropCommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DropComment
+        fields = "__all__"
