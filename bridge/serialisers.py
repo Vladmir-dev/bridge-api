@@ -96,3 +96,9 @@ class DropCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = DropComment
         fields = "__all__"
+
+
+class ProfilePhotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['photo']

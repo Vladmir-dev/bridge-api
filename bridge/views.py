@@ -1,9 +1,14 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serialisers import BaseRegister, LoginSerializer, UserSerializer, TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer, ChatSerializer,SendMoneySerializer,changePinSerializer,CommentSerializer,WalletPasswordSerializer,DropsSerializer
+from .serialisers import (BaseRegister, LoginSerializer, UserSerializer, 
+                          TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer, 
+                          ChatSerializer,SendMoneySerializer,changePinSerializer,CommentSerializer,
+                          WalletPasswordSerializer,DropsSerializer
+                          ,ProfilePhotSerializer)
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import exceptions as exc
 from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from rest_framework import viewsets
 import re
@@ -292,7 +297,31 @@ class AuthViewSet(GenericViewSet):
             return Response(data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors)
-         
+
+            
+
+    @action(detail=False, methods=['POST'], url_path="profile_photo/(?P<id>[0-9A-Za-z_\-]+)")
+    def profile_photo(self, request, id, **kwargs):
+        permission_classes = [IsAuthenticated]
+        parser_classes = [MultiPartParser, FormParser]
+        try:
+            user = User.objects.get(id=id)
+        except:
+            raise ValidationError("User does not exist")
+        
+        serializer = ProfilePhotSerializer(data=request.data)
+
+        if serializer.is_valid():
+            photo = serializer.data['photo']
+            print("photo =====>", photo)
+
+            user.photo = photo
+            user.save()
+            return Response(status=status.HTTP_201_CREATED)
+
+        else:
+            return Response(serializer.errors, status=400)   
+
 
     @action(detail=False, methods=['POST'])
     def login(self, request, **kwargs):

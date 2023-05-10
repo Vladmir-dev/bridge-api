@@ -21,7 +21,6 @@ from django_mysql.models import ListCharField
 # from django.db.models.signals import post_save
 # Create your models here.
 
-# default = "/media/user/photo/default/default.jpeg"
 
 def get_wallet_account_number():
     #get the Prefix
@@ -190,7 +189,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
-
+    #disable drops unless ads
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["email"]
@@ -320,6 +319,7 @@ class Wallet(models.Model):
     hash_value = models.CharField(max_length=2000),
     total_sent = models.FloatField(default=0)
     total_received = models.FloatField(default=0)
+    #rename to pin
     password = models.CharField(max_length=500, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -349,7 +349,7 @@ class Comment(models.Model):
         super().save(*args, **kwargs)
         compress_img(self.photo)
 
-
+#ranking likes
 class Likes(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Posts, on_delete=models.CASCADE)
@@ -366,6 +366,7 @@ class Drops(models.Model):
     video = models.FileField(upload_to='videos', null=True, blank=True, validators=[FileExtensionValidator(allowed_extensions=['MOV','avi', 'mp4', 'webm', 'mkv'])])
     document = models.FileField(upload_to='documents', null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
+    #soon can drop money
 
     def __str__(self):
         return f"Drop {self.id} by {self.sender.username}"
