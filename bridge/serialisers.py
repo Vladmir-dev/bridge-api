@@ -19,13 +19,24 @@ class BaseRegister(CountryFieldMixin, serializers.ModelSerializer):
             return value
 
 
-class ProfileRegister(CountryFieldMixin, serializers.ModelSerializer):
+class ProfileRegister(serializers.ModelSerializer):
     interests = serializers.ListField(child=serializers.CharField(), required=False)
+    photo = serializers.ImageField(required=True)
     class Meta:
         model = User
         fields = ['username',  'sex', 'date_of_birth',
                   'country', 'nationality', 'city', 'photo', 'occupation', 'interests', 'bio']
         # extra_kwargs = {'password': {'write_only': True,}}
+
+    def update(self, instance, validated_data):
+        photo = validated_data.pop('photo', None)
+        instance = super().update(instance, validated_data)
+        
+        if photo:
+            instance.photo = photo
+            instance.save()
+
+        return instance
 
 
 class UserSerializer(serializers.ModelSerializer):

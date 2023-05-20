@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render,get_object_or_404
 from rest_framework.response import Response
 from .serialisers import (BaseRegister, LoginSerializer, UserSerializer, 
                           TokenSerializer, ProfileRegister,PostSerializer,PostsSerializer, 
@@ -48,6 +48,9 @@ class AuthViewSet(GenericViewSet):
 
     # def list(self, *args, **kwargs):
     # 	raise exc.NotSupported()
+
+
+
 
     @action(detail=False, methods=['POST'])
     # @permission_classes([AllowAny])
@@ -120,7 +123,7 @@ class AuthViewSet(GenericViewSet):
         wallet.save()
 
 
-        message = f"Your wallet number is {wallet.wallet_no} welcome to bridge"
+        message = f"Hello {user.first_name} Your wallet number is {wallet.wallet_no} welcome to bridge"
         notific = Notifications(user=user, message=message)
         notific.save()
 
@@ -188,115 +191,115 @@ class AuthViewSet(GenericViewSet):
     
     
 
-    @action(detail=False, methods=['POST'], url_path="user_id/(?P<id>[0-9A-Za-z_\-]+)")
-    def create_profile(self, request, id, *args, **kwargs):
-        permission_classes = [IsAuthenticated,]
-        serializer = ProfileRegister(data=request.data)
+    # @action(detail=False, methods=['POST'], url_path="user_id/(?P<id>[0-9A-Za-z_\-]+)")
+    # def create_profile(self, request, id, *args, **kwargs):
+    #     permission_classes = [IsAuthenticated,]
+    #     serializer = ProfileRegister(data=request.data)
 
-        if serializer.is_valid():
+    #     if serializer.is_valid():
 
-            # check user
-            try:
-                user = User.objects.filter(id=id)
-            except:
-                raise ValidationError("User does not exist")
+    #         # check user
+    #         try:
+    #             user = User.objects.filter(id=id)
+    #         except:
+    #             raise ValidationError("User does not exist")
 
-            user = User.objects.get(id=id)
+    #         user = User.objects.get(id=id)
 
-            # check if username already exists
-            username = serializer.validated_data.get('username')
-            print("username ==>", username)
-            if username != None:
-                CheckUsername = User.objects.filter(username=username)
-                if CheckUsername:
-                    raise ValidationError("Username already exists")
+    #         # check if username already exists
+    #         username = serializer.validated_data.get('username')
+    #         # print("username ==>", username)
+    #         if username != None:
+    #             CheckUsername = User.objects.filter(username=username)
+    #             if CheckUsername:
+    #                 raise ValidationError("Username already exists")
 
-            sex = serializer.validated_data.get('sex')
+    #         sex = serializer.validated_data.get('sex')
 
-            city = serializer.validated_data.get('city')
-            country = serializer.validated_data.get('country')
-            nationality = serializer.validated_data.get('nationality')
-            date_of_birth = serializer.validated_data.get('date_of_birth')
-            photo = serializer.validated_data.get('photo')  
-            occupation = serializer.validated_data.get('occupation')
-            interests = serializer.validated_data.get('interests')
-            bio = serializer.validated_data.get('bio')
-            # user.phone_number = phone_number
-            if photo is None or photo == '':
-                # path = '/default/default.jpeg'
-                photo = ''
-            else:
-                photo = photo
+    #         city = serializer.validated_data.get('city')
+    #         country = serializer.validated_data.get('country')
+    #         nationality = serializer.validated_data.get('nationality')
+    #         date_of_birth = serializer.validated_data.get('date_of_birth')
+    #         photo = serializer.validated_data.get('photo')  
+    #         occupation = serializer.validated_data.get('occupation')
+    #         interests = serializer.validated_data.get('interests')
+    #         bio = serializer.validated_data.get('bio')
+    #         # user.phone_number = phone_number
+    #         if photo is None or photo == '':
+    #             # path = '/default/default.jpeg'
+    #             photo = ''
+    #         else:
+    #             photo = photo
 
-            if bio != None:
-                user.bio = bio
+    #         if bio != None:
+    #             user.bio = bio
 
-            if username != None:
-                user.username = username
+    #         if username != None:
+    #             user.username = username
 
-            if sex != None:
-                user.sex = sex
+    #         if sex != None:
+    #             user.sex = sex
 
-            if city != None:
-              user.city = city
+    #         if city != None:
+    #           user.city = city
 
-            if date_of_birth != None:
-                user.date_of_birth = date_of_birth
+    #         if date_of_birth != None:
+    #             user.date_of_birth = date_of_birth
             
-            if country != None:
-                user.country = country
+    #         if country != None:
+    #             user.country = country
 
-            if nationality != None:
-                user.nationality = nationality
+    #         if nationality != None:
+    #             user.nationality = nationality
 
-            if photo != None:
-                user.photo = photo
+    #         if photo != None:
+    #             user.photo = photo
             
-            if occupation != None:
-                user.occupation = occupation
+    #         if occupation != None:
+    #             user.occupation = occupation
             
-            if interests != None:
-                user.interests = interests
+    #         if interests != None:
+    #             user.interests = interests
 
-            user.save()
+    #         user.save()
 
-            wallet = Wallet.objects.get(user=user)
+    #         wallet = Wallet.objects.get(user=user)
             
             
 
-            # query_set = UserSerializer(user)
-            # print(query_set)
+    #         # query_set = UserSerializer(user)
+    #         # print(query_set)
 
-            data = {
-                "id": user.id,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email,
-                "phone_number": user.phone_number,
-                "sex": user.sex,
-                "city": user.city,
-                "verified": user.verified,
-                "interests":user.interests,
-                "occupation":user.occupation,
-                "photo":photo,
-                "country": user.country,
-                "nationality": user.nationality,
-                "date_of_birth": user.date_of_birth,
-                'bio':user.bio,
-                'accepted_terms': user.accepted_terms,
-                'date_joined': user.date_joined,
-                "wallet": {
-                    "wallet_no": wallet.wallet_no,
-                    "amount": wallet.amount,
-                    "total_received": wallet.total_received,
-                    "total_sent": wallet.total_sent
-                }
-            }
+    #         data = {
+    #             "id": user.id,
+    #             "username": user.username,
+    #             "first_name": user.first_name,
+    #             "last_name": user.last_name,
+    #             "email": user.email,
+    #             "phone_number": user.phone_number,
+    #             "sex": user.sex,
+    #             "city": user.city,
+    #             "verified": user.verified,
+    #             "interests":user.interests,
+    #             "occupation":user.occupation,
+    #             "photo":photo,
+    #             "country": user.country,
+    #             "nationality": user.nationality,
+    #             "date_of_birth": user.date_of_birth,
+    #             'bio':user.bio,
+    #             'accepted_terms': user.accepted_terms,
+    #             'date_joined': user.date_joined,
+    #             "wallet": {
+    #                 "wallet_no": wallet.wallet_no,
+    #                 "amount": wallet.amount,
+    #                 "total_received": wallet.total_received,
+    #                 "total_sent": wallet.total_sent
+    #             }
+    #         }
 
-            return Response(data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors)
+    #         return Response(data, status=status.HTTP_201_CREATED)
+    #     else:
+    #         return Response(serializer.errors)
 
             
 
@@ -412,7 +415,7 @@ class AuthViewSet(GenericViewSet):
         user_token = request.META.get('HTTP_AUTHORIZATION', '')
         user_token = user_token.replace('Bearer ', '')
         # user_token = str(user_token)
-        print("this is the token", user_token)
+        # print("this is the token", user_token)
 
         try:
             user = User.objects.filter(token=user_token)
@@ -427,7 +430,7 @@ class AuthViewSet(GenericViewSet):
             photo = user.photo
         # check wether token matches
         photo = str(photo)
-        print("photo ===> ", photo)
+        # print("photo ===> ", photo)
 
         total_posts = Posts.objects.filter(user=user).count()
         total_comments = Comment.objects.filter(user=user).count()
@@ -478,7 +481,6 @@ class AuthViewSet(GenericViewSet):
             'bridges':bridges
 
         }
-
         return Response(data, status=status.HTTP_200_OK)
 
     
@@ -527,6 +529,8 @@ class AuthViewSet(GenericViewSet):
             'amount': wallet.amount
         }
         return Response(data, status = status.HTTP_200_OK)
+    
+
 
     @action(detail=False, methods=["GET"], url_path="notifications/(?P<id>[0-9A-Za-z_\-]+)")
     def get_notifications(self, request, id, **kwargs):
@@ -1096,3 +1100,27 @@ class ModelViewSet(viewsets.ModelViewSet):
             drop = serializer.save()
             return Response(self.get_serializer(drop).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class ProfileCreateUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = ProfileRegister
+    authentication_classes = [CustomAuthentication,]
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser]
+
+    def get_object(self):
+        return get_object_or_404(User, id=self.request.user.id)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
