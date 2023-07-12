@@ -159,4 +159,4 @@ EMAIL_USE_TLS = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 AUTH_USER_MODEL = 'bridge.User'
-# WSGI_APPLICATION = 'bridge_api.wsgi.app'
+WSGI_APPLICATION = 'bridge_api.wsgi.app'
