@@ -1033,6 +1033,7 @@ class PostCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated,]
 
     def perform_create(self, serializer):
+        print("user ==>", self.request.user)
         serializer.save(user=self.request.user)
 
     def get_queryset(self):
